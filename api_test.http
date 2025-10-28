@@ -1,0 +1,738 @@
+### Digital Service API Test File
+### Base URL: http://localhost:8081/api/v1
+### OpenAPI Documentation: http://localhost:8081/swagger-ui/index.html
+
+# ===================================================================
+# SETUP & CONFIGURATION
+# ===================================================================
+
+@baseUrl = http://localhost:8081/api/v1
+@userEmail = testuser@example.com
+@firstName = Didij
+@lastName = User
+@password = Password123!
+@token = eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImpvaG5kb2VAZ21haWwuY29tIiwic3ViIjoiam9obmRvZUBnbWFpbC5jb20iLCJpYXQiOjE3NjE2ODEzMzUsImV4cCI6MTc2MTcyNDUzNX0.uM4H6a_j-xsEP8lWXvomEc1GsuOkRi6GoB4wTRkBAYs
+
+
+# ===================================================================
+# 1. MODULE MEMBERSHIP
+# ===================================================================
+
+### 1.1 Registration User Baru
+POST {{baseUrl}}/registration
+Content-Type: application/json
+
+{
+  "email": "{{userEmail}}",
+  "password": "{{password}}",
+  "firstName": "{{firstName}}",
+  "lastName": "{{lastName}}"
+}
+
+### 1.2 Registration User Kedua (untuk testing multiple users)
+POST http://localhost:8081/api/v1/registration
+Content-Type: application/json
+
+{
+  "email": "johndoe@example.com",
+  "password": "Password123!",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### 1.3 Login User (Gunakan response token untuk @token variable)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{userEmail}}",
+  "password": "{{password}}"
+}
+
+### SET TOKEN DARI RESPONSE LOGIN DIATAS:
+# Copy token dari response login dan ganti @token variable di atas
+# Current token format: "eyJhbGciOiJIUzI1NiJ9..."
+
+### 1.3a Refresh Token (Login again untuk dapat token baru jika expired)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{userEmail}}",
+  "password": "{{password}}"
+}
+
+### 1.4 Login User Kedua
+POST http://localhost:8081/api/v1/login
+Content-Type: application/json
+
+{
+  "email": "johndoe@example.com",
+  "password": "Password123!"
+}
+
+### 1.4a Login dengan Format Swagger UI (johndoe@gmail.com)
+POST http://localhost:8081/api/v1/login
+Content-Type: application/json
+
+{
+  "email": "johndoe@gmail.com",
+  "password": "Password123!"
+}
+
+### 1.5 Login dengan Password Salah (Expected: 400 - Username atau password salah)
+POST http://localhost:8081/api/v1/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "WrongPassword"
+}
+
+### 1.6 Login dengan Email Tidak Terdaftar (Expected: 400 - Username atau password salah)
+POST http://localhost:8081/api/v1/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "Password123!"
+}
+
+### 1.7 Registration dengan Email yang Sudah Ada (Expected: 400 - Email sudah terdaftar)
+POST http://localhost:8081/api/v1/registration
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "Password123!",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### 1.8 Registration dengan Email Format Salah (Expected: 400 - Email tidak sesuai format)
+POST http://localhost:8081/api/v1/registration
+Content-Type: application/json
+
+{
+  "email": "invalid-email",
+  "password": "Password123!",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### 1.9 Registration dengan Password Kurang dari 8 karakter (Expected: 400 - Validasi gagal)
+POST {{baseUrl}}/registration
+Content-Type: application/json
+
+{
+  "email": "weakpassword@example.com",
+  "password": "123",
+  "firstName": "Weak",
+  "lastName": "Password"
+}
+
+### 1.9a Registration dengan First Name Invalid (Expected: 400 - Validasi gagal)
+POST {{baseUrl}}/registration
+Content-Type: application/json
+
+{
+  "email": "invalidname@example.com",
+  "password": "{{password}}",
+  "firstName": "John123",
+  "lastName": "Doe"
+}
+
+### 1.9b Registration dengan Last Name Terlalu Pendek (Expected: 400 - Validasi gagal)
+POST {{baseUrl}}/registration
+Content-Type: application/json
+
+{
+  "email": "shortname@example.com",
+  "password": "{{password}}",
+  "firstName": "A",
+  "lastName": "B"
+}
+
+### 1.9c Registration dengan Format Swagger UI (johndoe@gmail.com)
+POST {{baseUrl}}/registration
+Content-Type: application/json
+
+{
+  "email": "johndoe@gmail.com",
+  "password": "Password123!",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### 1.10 Get Profile User
+GET {{baseUrl}}/profile
+Authorization: Bearer {{token}}
+
+### 1.10a Test Current Token Validity (Check if @token still valid)
+GET {{baseUrl}}/services
+Authorization: Bearer {{token}}
+
+### 1.10b Get Profile tanpa Authorization Header (Expected: 403 - Forbidden)
+GET {{baseUrl}}/profile
+
+### Response when token expired or invalid for GET /api/v1/profile:
+# {
+#   "status": 108,
+#   "message": "Token tidak tidak valid atau kadaluwarsa",
+#   "data": null
+# }
+
+### 1.11 Update Profile User
+PUT {{baseUrl}}/profile/update
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "firstName": "asasa",
+  "lastName": "Bayu2"
+}
+
+### 1.11a Update Profile User (Test Different Names)
+PUT {{baseUrl}}/profile/update
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "firstName": "a",
+  "lastName": "Doeee"
+}
+
+### 1.11b Update Profile User (Minimal Length)
+PUT {{baseUrl}}/profile/update
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "firstName": "Budi",
+  "lastName": "Sudarsono"
+}
+
+### 1.11c Update Profile User (Compact JSON - No Whitespace)
+PUT {{baseUrl}}/profile/update
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{"firstName":"Test","lastName":"User"}
+
+### 1.11d Debug Update Profile (POST without validation)
+POST {{baseUrl}}/profile/debug
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "firstName": "Debug",
+  "lastName": "Test"
+}
+
+### 1.12 Update Profile Image
+### Notes:
+### - Create a test image file (e.g., test-image.jpg) in the same directory as this .http file
+### - Supported formats: JPEG and PNG
+### - Max file size: 5MB
+### - Replace ./test-image.jpg with your actual image file path
+PUT {{baseUrl}}/profile/image
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="profile-image.jpg"
+Content-Type: image/jpeg
+
+< ./6mb.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 1.12a Update Profile Image (PNG Format)
+PUT {{baseUrl}}/profile/image
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="profile-image.png"
+Content-Type: image/png
+
+< ./jpg-img.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 1.13 Get Profile dengan Token Invalid/Expired (Expected: 401 - Unauthorized)
+GET {{baseUrl}}/profile
+Authorization: Bearer invalid.token.here
+
+### Response:
+# {
+#   "status": 108,
+#   "message": "Token tidak tidak valid atau kadaluwarsa",
+#   "data": null
+# }
+
+### 1.13a Test dengan Expired Token Pattern
+GET {{baseUrl}}/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MDAwMDAwMDB9.invalid
+
+### Response:
+# {
+#   "status": 108,
+#   "message": "Token tidak tidak valid atau kadaluwarsa",
+#   "data": null
+# }
+
+### 1.13c Complete Error Response Reference
+### ===================================================================
+### API Endpoint: GET http://localhost:8081/api/v1/profile
+###
+### When JWT Token is Expired or Invalid:
+### Request Headers: Authorization: Bearer <invalid_or_expired_token>
+###
+### Response Body:
+### {
+###   "status": 108,
+###   "message": "Token tidak tidak valid atau kadaluwarsa",
+###   "data": null
+### }
+###
+### HTTP Status Code: 401 Unauthorized
+### Content-Type: application/json
+### ===================================================================
+
+# ===================================================================
+# 2. MODULE INFORMATION
+# ===================================================================
+
+### 2.1 Get Banner List (Expected: 501 - N/A)
+GET {{baseUrl}}/banner
+Authorization: Bearer {{token}}
+
+### 2.2 Get Services List
+GET {{baseUrl}}/services
+Authorization: Bearer {{token}}
+
+### 2.3 Get Services tanpa Token (Expected: 401 - Unauthorized)
+GET {{baseUrl}}/services
+
+# ===================================================================
+# 3. MODULE TRANSACTION
+# ===================================================================
+
+### 3.1 Get Balance User
+GET {{baseUrl}}/balance
+Authorization: Bearer {{token}}
+
+### 3.2 Top Up Balance - Rp 100.000
+POST {{baseUrl}}/topup
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "topUpAmount": 100000
+}
+
+### 3.3 Top Up Balance - Rp 50.000
+POST {{baseUrl}}/topup
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "topUpAmount": 50000
+}
+
+### 3.4 Top Up dengan Jumlah Tidak Valid (Expected: 400 - Validasi gagal)
+POST {{baseUrl}}/topup
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "topUpAmount": -1000
+}
+
+### 3.5 Top Up dengan Jumlah Nol (Expected: 400 - Validasi gagal)
+POST {{baseUrl}}/topup
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "topUpAmount": 0
+}
+
+### 3.6 Transaction - Bayar PAJAK (Pajak PBB - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "PAJAK"
+}
+
+### 3.7 Transaction - Bayar PLN (Listrik PLN - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "PLN"
+}
+
+### 3.8 Transaction - Bayar PDAM (PDAM Berhasil - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "PDAM"
+}
+
+### 3.9 Transaction - Bayar TELKOM (Telkom - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "TELKOM"
+}
+
+### 3.10 Transaction - Beli PULSA (Pulsa Telkomsel 5GB - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "PULSA"
+}
+
+### 3.11 Transaction - Beli GAME (Voucher Game 100 Diamond - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "GAME"
+}
+
+### 3.12 Transaction - Beli VOUCHER (Voucher Makanan 50ribu - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "VOUCHER"
+}
+
+### 3.13 Transaction - Top Up E-TOLL (Top Up E-Toll 50ribu - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "ETOLL"
+}
+
+### 3.14 Transaction - Beli PAKET_DATA (Paket Data 10GB - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "PAKET_DATA"
+}
+
+### 3.15 Transaction - Beli STREAMING (Langganan Netflix 1 Bulan - Rp 40.000)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "STREAMING"
+}
+
+### 3.16 Transaction dengan Service Code Tidak Ada (Expected: 400 - Service tidak ditemukan)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "INVALID_SERVICE"
+}
+
+### 3.17 Transaction dengan Saldo Tidak Cukup (Setelah beberapa transaksi)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "PAJAK"
+}
+
+### 3.18 Transaction tanpa Token (Expected: 401 - Unauthorized)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+
+{
+  "serviceCode": "PAJAK"
+}
+
+### 3.19 Get Transaction History
+GET {{baseUrl}}/transaction/history
+Authorization: Bearer {{token}}
+
+### 3.20 Get Transaction History tanpa Token (Expected: 401 - Unauthorized)
+GET {{baseUrl}}/transaction/history
+
+### 3.21 Get Balance setelah Transaksi
+GET {{baseUrl}}/balance
+Authorization: Bearer {{token}}
+
+### 3.22 Get Balance dengan Token Invalid (Expected: 401 - Token tidak valid)
+GET {{baseUrl}}/balance
+Authorization: Bearer invalid.token.here
+
+### Response:
+# {
+#   "status": 108,
+#   "message": "Token tidak tidak valid atau kadaluwarsa",
+#   "data": null
+# }
+
+### 3.23 Top Up tanpa Token (Expected: 401 - Unauthorized)
+POST {{baseUrl}}/topup
+Content-Type: application/json
+
+{
+  "topUpAmount": 100000
+}
+
+# ===================================================================
+# TESTING SCENARIOS & WORKFLOWS
+# ===================================================================
+
+### SCENARIO 1: Alur Lengkap User Baru
+### Description: Testing complete user journey from registration to transactions
+# Steps: 1. Registration → 2. Login → 3. Get Profile → 4. Get Balance → 5. Top Up → 6. Transaction → 7. Get History
+
+### SCENARIO 2: Testing Error Handling & Validation
+### Description: Testing various error conditions and validation rules
+# Steps: 1. Invalid Login → 2. Invalid Registration Data → 3. Invalid Transaction → 4. Insufficient Balance
+
+### SCENARIO 3: Multiple Users Testing
+### Description: Testing system with multiple concurrent users
+# Steps: 1. Create 2 users → 2. Login both users → 3. Transactions from both users → 4. Verify data isolation
+
+### SCENARIO 4: Boundary & Edge Case Testing
+### Description: Testing system limits and edge cases
+# Steps: 1. Minimum/Maximum amounts → 2. Invalid data formats → 3. Security testing → 4. Performance testing
+
+### ===================================================================
+# QUICK WORKFLOW TESTING
+# ===================================================================
+
+### WORKFLOW 1: Complete User Journey (Execute in order)
+### 1. Register User
+POST {{baseUrl}}/registration
+Content-Type: application/json
+
+{
+  "email": "journeyuser@example.com",
+  "password": "JourneyPass123!",
+  "firstName": "Journey",
+  "lastName": "User"
+}
+
+### 2. Login & Get Token
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "journeyuser@example.com",
+  "password": "JourneyPass123!"
+}
+
+### 3. Get Initial Balance (Set @token from step 2 response)
+GET {{baseUrl}}/balance
+Authorization: Bearer {{token}}
+
+### If token expired, response will be:
+# {
+#   "status": 108,
+#   "message": "Token tidak tidak valid atau kadaluwarsa",
+#   "data": null
+# }
+
+### 4. Top Up Balance
+POST {{baseUrl}}/topup
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "topUpAmount": 200000
+}
+
+### 5. Get Services List
+GET {{baseUrl}}/services
+Authorization: Bearer {{token}}
+
+### 6. Make Transaction (PLN)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "PLN"
+}
+
+### 7. Get Transaction History
+GET {{baseUrl}}/transaction/history
+Authorization: Bearer {{token}}
+
+### 8. Update Profile
+PUT {{baseUrl}}/profile/update
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "firstName": "Updated",
+  "lastName": "JourneyUser"
+}
+
+### ===================================================================
+# LOAD TESTING PREPARATION
+# ===================================================================
+
+### Load Test: Multiple Top-ups
+POST {{baseUrl}}/topup
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "topUpAmount": 50000
+}
+
+### Load Test: Multiple Transactions (Execute multiple times)
+POST {{baseUrl}}/transaction
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "serviceCode": "PULSA"
+}
+
+# ===================================================================
+# INSTRUCTIONS & DOCUMENTATION
+# ===================================================================
+#
+# 📋 SETUP INSTRUCTIONS:
+# 1. Pastikan aplikasi sudah running di http://localhost:8081
+# 2. Buka Swagger UI: http://localhost:8081/swagger-ui/index.html
+# 3. Jalankan registration test terlebih dahulu (1.1)
+# 4. Jalankan login test (1.3) untuk mendapatkan JWT token
+# 5. Copy token dari response login dan update @token variable di atas
+# 6. Untuk test upload image (1.12), siapkan file gambar test-image.jpg atau test-image.png
+# 7. Jalankan test lainnya sesuai kebutuhan
+#
+# 🛠️ TOOLS YANG DAPAT DIGUNAKAN:
+# - VS Code REST Client extension (recommended)
+# - Postman
+# - Insomnia
+# - curl command line
+#
+# 📊 RESPONSE FORMAT:
+# Success Response:
+# {
+#   "status": 0,
+#   "message": "Success message",
+#   "data": { ... }
+# }
+#
+# Error Response:
+# {
+#   "status": [error_code],
+#   "message": "Error description",
+#   "data": null
+# }
+#
+# 🚨 HTTP STATUS CODES:
+# - 200: Success
+# - 400: Bad Request (Validation failed, invalid data)
+# - 401: Unauthorized (Invalid/expired token)
+# - 403: Forbidden (Missing token or insufficient permissions)
+# - 500: Internal Server Error
+# - 501: Not Implemented (Feature N/A)
+#
+# 📋 ERROR RESPONSE EXAMPLES:
+#
+# ===================================================================
+# JWT TOKEN ERRORS (Status 401)
+# ===================================================================
+# Endpoint: GET http://localhost:8081/api/v1/profile
+# Headers: Authorization: Bearer <invalid_or_expired_token>
+#
+# Response Body:
+# {
+#   "status": 108,
+#   "message": "Token tidak tidak valid atau kadaluwarsa",
+#   "data": null
+# }
+#
+# ===================================================================
+# MISSING TOKEN (Status 403)
+# ===================================================================
+# Endpoint: GET http://localhost:8081/api/v1/profile
+# Headers: No Authorization header
+#
+# Response Body:
+# {
+#   "timestamp": "2025-10-28T15:42:07.660+00:00",
+#   "status": 403,
+#   "error": "Forbidden",
+#   "path": "/api/v1/profile"
+# }
+#
+# ===================================================================
+# VALIDATION ERROR (Status 400)
+# ===================================================================
+# Endpoint: POST http://localhost:8081/api/v1/registration
+#
+# Response Body:
+# {
+#   "status": 102,
+#   "message": "Email tidak sesuai format",
+#   "data": null
+# }
+#
+# ✅ VALIDATION REQUIREMENTS:
+# - Email: Valid email format
+# - Password: Minimum 8 characters
+# - First Name: Letters only, minimum 2 characters
+# - Last Name: Letters only, minimum 2 characters
+# - Top-up Amount: Must be > 0
+# - Service Code: Must be valid service from services list
+#
+# 🎯 RECOMMENDED TESTING FLOW:
+# 1. Execute "WORKFLOW 1: Complete User Journey" in sequence
+# 2. Test error scenarios in section 1.8-1.9b
+# 3. Test transaction flows in section 3.6-3.17
+# 4. Test security scenarios (unauthorized access)
+# 5. Perform load testing with multiple requests
+#
+# 📝 NOTES:
+# - Set @token variable dengan JWT token dari response login
+# - Gunakan variables untuk memudahkan testing (@baseUrl, @userEmail, etc.)
+# - Perhatikan balance limits saat melakukan transaksi
+# - Setiap service memiliki tariff yang berbeda-beda
+#
+# 🔗 AVAILABLE SERVICES (dari /services endpoint):
+# - PAJAK: Pajak PBB (Rp 40.000)
+# - PLN: Listrik PLN (Rp 40.000)
+# - PDAM: PDAM Berhasil (Rp 40.000)
+# - TELKOM: Telkom (Rp 40.000)
+# - PULSA: Pulsa Telkomsel 5GB (Rp 40.000)
+# - GAME: Voucher Game 100 Diamond (Rp 40.000)
+# - VOUCHER: Voucher Makanan 50ribu (Rp 40.000)
+# - ETOLL: Top Up E-Toll 50ribu (Rp 40.000)
+# - PAKET_DATA: Paket Data 10GB (Rp 40.000)
+# - STREAMING: Langganan Netflix 1 Bulan (Rp 40.000)
+#
+# ===================================================================
+# END OF API TEST FILE
+# ===================================================================
