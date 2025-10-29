@@ -302,9 +302,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MDAwMDAwMDB9.invalid
 # 2. MODULE INFORMATION
 # ===================================================================
 
-### 2.1 Get Banner List (Expected: 501 - N/A)
+### 2.1 Get Banner List (Public API - No token required)
 GET {{baseUrl}}/banner
-Authorization: Bearer {{token}}
 
 ### 2.2 Get Services List
 GET {{baseUrl}}/services

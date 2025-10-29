@@ -12,7 +12,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
         configurer
             .favorParameter(false)
-            .ignoreAcceptHeader(true)
+            .ignoreAcceptHeader(false)
             .defaultContentType(MediaType.APPLICATION_JSON);
     }
 }
