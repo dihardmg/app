@@ -1,4 +1,5 @@
-FROM eclipse-temurin:25-jdk-alpine
+# Use the official Eclipse Temurin JDK 25 image as the base
+FROM eclipse-temurin:25-jdk
 
 WORKDIR /app
 
@@ -6,6 +7,9 @@ WORKDIR /app
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
+
+# Make Maven wrapper executable
+RUN chmod +x ./mvnw
 
 # Download dependencies
 RUN ./mvnw dependency:go-offline
