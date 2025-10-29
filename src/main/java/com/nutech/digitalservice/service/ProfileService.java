@@ -8,6 +8,8 @@ import com.nutech.digitalservice.exception.FileValidationException;
 import com.nutech.digitalservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -41,16 +44,24 @@ public class ProfileService {
             ".jpg", ".jpeg", ".png"
     );
 
+    @Cacheable(value = "profiles", key = "#user.id")
     public ProfileResponse getProfile(User user) {
-        String fullProfileImageUrl = buildFullImageUrl(user.getProfileImage());
+        // Menggunakan raw query dengan prepared statement untuk performance yang lebih baik
+        Optional<User> userOpt = userRepository.findUserByIdRaw(user.getId());
+
+        // Fallback ke existing user object jika raw query gagal
+        User userProfile = userOpt.orElse(user);
+
+        String fullProfileImageUrl = buildFullImageUrl(userProfile.getProfileImage());
         return ProfileResponse.builder()
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
+                .email(userProfile.getEmail())
+                .firstName(userProfile.getFirstName())
+                .lastName(userProfile.getLastName())
                 .profileImage(fullProfileImageUrl)
                 .build();
     }
 
+    @CacheEvict(value = "profiles", key = "#user.id")
     public ProfileResponse updateProfile(User user, UpdateProfileRequest request) {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
@@ -66,6 +77,7 @@ public class ProfileService {
                 .build();
     }
 
+    @CacheEvict(value = "profiles", key = "#user.id")
     public ProfileResponse updateProfileImage(User user, ImageUploadRequest request) {
         MultipartFile file = request.getFile();
 

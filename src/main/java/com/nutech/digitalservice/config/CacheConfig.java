@@ -12,7 +12,7 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        // Cache untuk banners dan services dengan In-Memory Cache
-        return new ConcurrentMapCacheManager("banners", "services");
+        // Cache untuk banners, services, dan profiles dengan In-Memory Cache
+        return new ConcurrentMapCacheManager("banners", "services", "profiles");
     }
 }
