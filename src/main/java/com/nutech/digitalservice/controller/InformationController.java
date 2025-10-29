@@ -126,11 +126,92 @@ public class InformationController {
          }
      }
 
-    @Operation(summary = "Mendapatkan daftar layanan yang tersedia", description = "Mendapatkan daftar layanan yang tersedia")
+    @Operation(
+        summary = "Mendapatkan daftar layanan yang tersedia (Private)",
+        description = "**API Services Private (Memerlukan Token untuk mengaksesnya)**\n\n" +
+                    "Digunakan untuk mendapatkan list Service/Layanan PPOB yang tersedia.\n\n" +
+                    "**Response:**\n" +
+                    "- Mengembalikan daftar layanan dengan informasi kode, nama, icon, dan tarif"
+    )
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Request Successfully"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "200", description = "Request Successfully",
+                content = @Content(
+                        mediaType = "application/json",
+                        schema = @Schema(implementation = WebResponse.class),
+                        examples = @ExampleObject(
+                                value = """
+                                                {
+                                                  "status": 0,
+                                                  "message": "Sukses",
+                                                  "data": [
+                                                    {
+                                                      "service_code": "PAJAK",
+                                                      "service_name": "Pajak PBB",
+                                                      "service_icon": "https://nutech-integrasi.app/dummy.jpg",
+                                                      "service_tariff": 40000
+                                                    },
+                                                    {
+                                                      "service_code": "PLN",
+                                                      "service_name": "Listrik",
+                                                      "service_icon": "https://nutech-integrasi.app/dummy.jpg",
+                                                      "service_tariff": 10000
+                                                    },
+                                                    {
+                                                      "service_code": "PDAM",
+                                                      "service_name": "PDAM Berlangganan",
+                                                      "service_icon": "https://nutech-integrasi.app/dummy.jpg",
+                                                      "service_tariff": 40000
+                                                    },
+                                                    {
+                                                      "service_code": "PULSA",
+                                                      "service_name": "Pulsa",
+                                                      "service_icon": "https://nutech-integrasi.app/dummy.jpg",
+                                                      "service_tariff": 40000
+                                                    },
+                                                    {
+                                                      "service_code": "PGN",
+                                                      "service_name": "PGN Berlangganan",
+                                                      "service_icon": "https://nutech-integrasi.app/dummy.jpg",
+                                                      "service_tariff": 50000
+                                                    },
+                                                    {
+                                                      "service_code": "MUSIK",
+                                                      "service_name": "Musik Berlangganan",
+                                                      "service_icon": "https://nutech-integrasi.app/dummy.jpg",
+                                                      "service_tariff": 50000
+                                                    },
+                                                    {
+                                                      "service_code": "TV",
+                                                      "service_name": "TV Berlangganan",
+                                                      "service_icon": "https://nutech-integrasi.app/dummy.jpg",
+                                                      "service_tariff": 50000
+                                                    }
+                                                  ]
+                                                }
+                                                """
+                        )
+                )
+        ),
+        
+        @ApiResponse(
+                    responseCode = "401",
+                   
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                                                {
+                                                                   "status": 108,
+                                                                   "message": "Token tidak tidak valid atau kadaluwarsa",
+                                                                   "data": null
+                                                                 }
+                                            """
+                            )
+                    )
+            )
     })
     @GetMapping("/services")
     public ResponseEntity<WebResponse<List<ServiceResponse>>> getServices(@AuthenticationPrincipal User user) {
@@ -142,6 +223,34 @@ public class InformationController {
                 .data(services)
                 .build();
 
-        return ResponseEntity.ok(response);
+        // Set headers sesuai spesifikasi
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.valueOf("application/json; charset=utf-8"));
+
+        // Convert response to JSON string to calculate content length
+        try {
+            String jsonResponse = "{\"status\":0,\"message\":\"Sukses\",\"data\":[";
+            boolean first = true;
+            for (ServiceResponse service : services) {
+                if (!first) jsonResponse += ",";
+                jsonResponse += String.format("{\"serviceCode\":\"%s\",\"serviceName\":\"%s\",\"serviceIcon\":\"%s\",\"serviceTariff\":%d}",
+                    service.getServiceCode().replace("\"", "\\\""),
+                    service.getServiceName().replace("\"", "\\\""),
+                    service.getServiceIcon().replace("\"", "\\\""),
+                    service.getServiceTariff());
+                first = false;
+            }
+            jsonResponse += "]}";
+
+            headers.setContentLength(jsonResponse.getBytes(StandardCharsets.UTF_8).length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(response);
+        } catch (Exception e) {
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(response);
+        }
     }
 }

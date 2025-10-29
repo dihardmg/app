@@ -35,6 +35,7 @@ public class ServiceEntity {
     @Column(name = "service_tariff", precision = 15, scale = 2, nullable = false)
     private BigDecimal serviceTariff;
 
+    @Builder.Default
     @Column(nullable = true)
     private Boolean active = true;
 }
