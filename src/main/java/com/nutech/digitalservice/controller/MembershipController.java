@@ -225,7 +225,7 @@ public class MembershipController {
                                                                                   "email": "johndoe@gmail.com",
                                                                                   "firstName": "hadi",
                                                                                   "lastName": "Sudarsono",
-                                                                                  "profileImage": "/uploads/profile-images/e4007ab2-2353-4f32-b630-3f5698962e79.jpg"
+                                                                                  "profileImage": "http://localhost:8081/uploads/profile-images/984b8dfa-d6fd-475f-b830-36ad54a8ddb2.png"
                                                                                 }
                                                                               }
                                             """
@@ -312,7 +312,7 @@ public class MembershipController {
                                                                                            "email": "johndoe@gmail.com",
                                                                                            "firstName": "hadi",
                                                                                            "lastName": "Sudarsono",
-                                                                                           "profileImage": "/uploads/profile-images/e4007ab2-2353-4f32-b630-3f5698962e79.jpg"
+                                                                                           "profileImage": "http://localhost:8081/uploads/profile-images/984b8dfa-d6fd-475f-b830-36ad54a8ddb2.png"
                                                                                          }
                                                                                          }
                                             
@@ -409,7 +409,7 @@ public class MembershipController {
                                                                                      "email": "johndoe@gmail.com",
                                                                                      "firstName": "fJwgEohVjVwizIQXMIUfQkchddFgPiuikQrDzFtAeuayqRuYFZu",
                                                                                      "lastName": "LrLMgOJzqUXKEVgqFLCLWuMRJBMNVRmTeUrnoxdWcGJNYJTtVNyfnQ",
-                                                                                     "profileImage": "/uploads/profile-images/f12d1a0e-d395-44a6-b49b-fafd938eafb4.png"
+                                                                                     "profileImage": "http://localhost:8081/uploads/profile-images/984b8dfa-d6fd-475f-b830-36ad54a8ddb2.png"
                                                                                    }
                                                                                  }
                                             """

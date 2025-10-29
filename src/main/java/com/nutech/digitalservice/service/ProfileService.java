@@ -29,6 +29,9 @@ public class ProfileService {
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
+    @Value("${app.base.url:http://localhost:8081}")
+    private String baseUrl;
+
     private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
             "image/jpeg",
             "image/png"
@@ -39,11 +42,12 @@ public class ProfileService {
     );
 
     public ProfileResponse getProfile(User user) {
+        String fullProfileImageUrl = buildFullImageUrl(user.getProfileImage());
         return ProfileResponse.builder()
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .profileImage(user.getProfileImage())
+                .profileImage(fullProfileImageUrl)
                 .build();
     }
 
@@ -53,11 +57,12 @@ public class ProfileService {
 
         user = userRepository.save(user);
 
+        String fullProfileImageUrl = buildFullImageUrl(user.getProfileImage());
         return ProfileResponse.builder()
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .profileImage(user.getProfileImage())
+                .profileImage(fullProfileImageUrl)
                 .build();
     }
 
@@ -88,12 +93,15 @@ public class ProfileService {
             user.setProfileImage(imageUrl);
             userRepository.save(user);
 
+            // Build full URL for response
+            String fullImageUrl = buildFullImageUrl(imageUrl);
+
             // Return profile response with updated data
             return ProfileResponse.builder()
                     .email(user.getEmail())
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
-                    .profileImage(imageUrl)
+                    .profileImage(fullImageUrl)
                     .build();
 
         } catch (IOException e) {
@@ -195,5 +203,15 @@ public class ProfileService {
             return "";
         }
         return filename.substring(filename.lastIndexOf("."));
+    }
+
+    private String buildFullImageUrl(String relativePath) {
+        if (relativePath == null || relativePath.trim().isEmpty()) {
+            return null;
+        }
+
+        // Remove leading slash if present to avoid double slashes
+        String cleanPath = relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
+        return baseUrl + "/" + cleanPath;
     }
 }
