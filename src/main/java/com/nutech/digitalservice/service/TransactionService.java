@@ -10,6 +10,8 @@ import com.nutech.digitalservice.repository.BalanceRepository;
 import com.nutech.digitalservice.repository.ServiceRepository;
 import com.nutech.digitalservice.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +31,10 @@ public class TransactionService {
     @Autowired
     private BalanceRepository balanceRepository;
 
+    @Cacheable(value = "services", key = "'allServices'")
     public List<ServiceResponse> getAllServices() {
-        List<ServiceEntity> services = serviceRepository.findAll();
+        // Menggunakan raw query dengan prepared statement
+        List<ServiceEntity> services = serviceRepository.findAllActiveServicesRaw();
 
         return services.stream()
                 .map(this::convertToServiceResponse)
@@ -38,8 +42,10 @@ public class TransactionService {
     }
 
     @Transactional
+    @CacheEvict(value = "services", allEntries = true) // Clear cache when transaction occurs
     public TransactionResponse makeTransaction(User user, String serviceCode) {
-        ServiceEntity service = serviceRepository.findByServiceCode(serviceCode)
+        // Menggunakan raw query dengan prepared statement untuk mencari service
+        ServiceEntity service = serviceRepository.findActiveServiceByCodeRaw(serviceCode)
                 .orElseThrow(() -> new RuntimeException("Service tidak ditemukan"));
 
         Balance balance = balanceRepository.findByUser(user)
@@ -67,6 +73,14 @@ public class TransactionService {
                 .nominal(transaction.getNominal().intValue())
                 .transactionTime(transaction.getTransactionTime())
                 .build();
+    }
+
+    /**
+     * Method untuk refresh cache services secara manual
+     */
+    @CacheEvict(value = "services", allEntries = true)
+    public void refreshServicesCache() {
+        // Cache akan dihapus dan direfresh pada pemanggilan berikutnya
     }
 
     public List<TransactionResponse> getTransactionHistory(User user) {

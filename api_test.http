@@ -11,8 +11,7 @@
 @firstName = Didij
 @lastName = User
 @password = Password123!
-@token = eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6InRlc3R1c2VyQGV4YW1wbGUuY29tIiwic3ViIjoidGVzdHVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjE3NDgyMDIsImV4cCI6MTc2MTc5MTQwMn0.WvFNDkrv6w1-_LWxcVvNydQSsqR9Gb0Q6A8rzF2hIMo
-
+@token = eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6InRlc3R1c2VyQGV4YW1wbGUuY29tIiwic3ViIjoidGVzdHVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjE3NTE3NjgsImV4cCI6MTc2MTc5NDk2OH0.aibe2PxfzxAyVbZU1grDRJIIUMdcmS26eXDnGPSx7Jc
 # ===================================================================
 # 1. MODULE MEMBERSHIP
 # ===================================================================
