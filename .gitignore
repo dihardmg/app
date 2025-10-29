@@ -32,9 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 .claude
-.png
-.jpg
-.jpeg
+# Abaikan semua file JPG, JPEG & PNG di seluruh proyek
+*.png
+*.jpg
+*.jpeg
 
 
 
