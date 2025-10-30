@@ -11,7 +11,9 @@
 @firstName = Didij
 @lastName = User
 @password = Password123!
-@token = eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6InRlc3R1c2VyQGV4YW1wbGUuY29tIiwic3ViIjoidGVzdHVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjE3NTE3NjgsImV4cCI6MTc2MTc5NDk2OH0.aibe2PxfzxAyVbZU1grDRJIIUMdcmS26eXDnGPSx7Jc
+@token = eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6InRlc3R1c2VyQGV4YW1wbGUuY29tIiwic3ViIjoidGVzdHVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjE4Mjk0MDUsImV4cCI6MTc2MTg3MjYwNX0.Ekg8pX-mfKx8-eik1LwTv_nG-cibnhJXCuBolCxiCCY
+
+
 # ===================================================================
 # 1. MODULE MEMBERSHIP
 # ===================================================================
@@ -324,7 +326,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "topUpAmount": 100000
+  "top_up_amount": 100000
 }
 
 ### 3.3 Top Up Balance - Rp 50.000
@@ -333,7 +335,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "topUpAmount": 50000
+  "top_up_amount": 50000
 }
 
 ### 3.4 Top Up dengan Jumlah Tidak Valid (Expected: 400 - Validasi gagal)
@@ -342,7 +344,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "topUpAmount": -1000
+  "top_up_amount": 3
 }
 
 ### 3.5 Top Up dengan Jumlah Nol (Expected: 400 - Validasi gagal)
@@ -351,7 +353,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "topUpAmount": 0
+  "top_up_amount": 0
 }
 
 ### 3.6 Transaction - Bayar PAJAK (Pajak PBB - Rp 40.000)
@@ -471,7 +473,7 @@ Content-Type: application/json
 }
 
 ### 3.19 Get Transaction History
-GET {{baseUrl}}/transaction/history
+GET {{baseUrl}}/transaction/history?offset=0&limit=2
 Authorization: Bearer {{token}}
 
 ### 3.20 Get Transaction History tanpa Token (Expected: 401 - Unauthorized)
@@ -497,7 +499,7 @@ POST {{baseUrl}}/topup
 Content-Type: application/json
 
 {
-  "topUpAmount": 100000
+  "top_up_amount": 100000
 }
 
 # ===================================================================
@@ -562,7 +564,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "topUpAmount": 200000
+  "top_up_amount": 200000
 }
 
 ### 5. Get Services List
@@ -602,7 +604,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "topUpAmount": 50000
+  "top_up_amount": 50000
 }
 
 ### Load Test: Multiple Transactions (Execute multiple times)

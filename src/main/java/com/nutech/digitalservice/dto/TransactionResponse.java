@@ -5,15 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransactionResponse {
-    private String transactionCode;
-    private String serviceName;
-    private Integer nominal;
-    private LocalDateTime transactionTime;
+    private String invoiceNumber;
+    private String description;
+    private String transactionType;
+    private Long totalAmount;
+    private Instant createdOn;
 }

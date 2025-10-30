@@ -1,0 +1,24 @@
+{
+  "status": 0,
+  "message": "Get History Berhasil",
+  "data": {
+    "offset": "0",
+    "limit": "3",
+    "records": [
+      {
+        "invoiceNumber": "INV20251030-000001",
+        "description": "Pajak PBB",
+        "transactionType": "PAYMENT",
+        "totalAmount": 40000,
+        "createdOn": "2025-10-30T20:30:15.123456Z"
+      },
+      {
+        "invoiceNumber": "INV20251030-000002",
+        "description": "Top Up balance",
+        "transactionType": "TOPUP",
+        "totalAmount": 50000,
+        "createdOn": "2025-10-30T20:25:30.654321Z"
+      }
+    ]
+  }
+}

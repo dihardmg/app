@@ -5,10 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BalanceResponse {
-    private Long balance;
+public class TransactionHistoryResponse {
+    private String offset;
+    private String limit;
+    private List<TransactionResponse> records;
 }

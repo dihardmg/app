@@ -54,7 +54,7 @@ public class AuthService {
 
         Balance balance = Balance.builder()
                 .user(user)
-                .balance(java.math.BigDecimal.ZERO)
+                .balance(0L)
                 .build();
 
         balanceRepository.save(balance);

@@ -1,22 +1,22 @@
 package com.nutech.digitalservice.service;
 
 import com.nutech.digitalservice.dto.ServiceResponse;
+import com.nutech.digitalservice.dto.TransactionHistoryResponse;
 import com.nutech.digitalservice.dto.TransactionResponse;
-import com.nutech.digitalservice.entity.Balance;
 import com.nutech.digitalservice.entity.ServiceEntity;
 import com.nutech.digitalservice.entity.Transaction;
 import com.nutech.digitalservice.entity.User;
-import com.nutech.digitalservice.repository.BalanceRepository;
+import com.nutech.digitalservice.repository.BalanceRepositoryCustom;
 import com.nutech.digitalservice.repository.ServiceRepository;
-import com.nutech.digitalservice.repository.TransactionRepository;
+import com.nutech.digitalservice.repository.TransactionRepositoryCustom;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,10 +26,10 @@ public class TransactionService {
     private ServiceRepository serviceRepository;
 
     @Autowired
-    private TransactionRepository transactionRepository;
+    private TransactionRepositoryCustom transactionRepositoryCustom;
 
     @Autowired
-    private BalanceRepository balanceRepository;
+    private BalanceRepositoryCustom balanceRepositoryCustom;
 
     @Cacheable(value = "services", key = "'allServices'")
     public List<ServiceResponse> getAllServices() {
@@ -44,35 +44,44 @@ public class TransactionService {
     @Transactional
     @CacheEvict(value = "services", allEntries = true) // Clear cache when transaction occurs
     public TransactionResponse makeTransaction(User user, String serviceCode) {
-        // Menggunakan raw query dengan prepared statement untuk mencari service
-        ServiceEntity service = serviceRepository.findActiveServiceByCodeRaw(serviceCode)
-                .orElseThrow(() -> new RuntimeException("Service tidak ditemukan"));
+        // Check if service exists using raw query
+        Optional<String> serviceNameOpt = transactionRepositoryCustom.getServiceNameByCode(serviceCode);
+        if (serviceNameOpt.isEmpty()) {
+            throw new RuntimeException("Service ataus Layanan tidak ditemukan");
+        }
 
-        Balance balance = balanceRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Balance not found for user"));
+        Optional<Long> serviceTariffOpt = transactionRepositoryCustom.getServiceTariffByCode(serviceCode);
+        if (serviceTariffOpt.isEmpty()) {
+            throw new RuntimeException("Service ataus Layanan tidak ditemukan");
+        }
 
-        if (balance.getBalance().compareTo(service.getServiceTariff()) < 0) {
+        Long serviceTariff = serviceTariffOpt.get();
+        String serviceName = serviceNameOpt.get();
+
+        // Check current balance using raw query
+        Long currentBalance = transactionRepositoryCustom.getCurrentBalance(user);
+        if (currentBalance < serviceTariff) {
             throw new RuntimeException("Saldo tidak mencukupi");
         }
 
-        balance.setBalance(balance.getBalance().subtract(service.getServiceTariff()));
-        balanceRepository.save(balance);
+        // Update balance using raw query
+        Long newBalance = currentBalance - serviceTariff;
+        transactionRepositoryCustom.updateBalanceWithRawQuery(user, newBalance);
 
-        Transaction transaction = Transaction.builder()
-                .user(user)
-                .transactionType(Transaction.TransactionType.PAYMENT)
-                .serviceName(service.getServiceName())
-                .nominal(service.getServiceTariff())
-                .build();
+        // Generate invoice number
+        String invoiceNumber = transactionRepositoryCustom.generateInvoiceNumber();
 
-        transaction = transactionRepository.save(transaction);
+        // Insert transaction using raw query
+        Transaction transaction = transactionRepositoryCustom.insertTransactionWithRawQuery(
+                user,
+                invoiceNumber,
+                "PAYMENT",
+                serviceCode,
+                serviceName,
+                serviceTariff
+        );
 
-        return TransactionResponse.builder()
-                .transactionCode(transaction.getTransactionCode())
-                .serviceName(transaction.getServiceName())
-                .nominal(transaction.getNominal().intValue())
-                .transactionTime(transaction.getTransactionTime())
-                .build();
+        return convertToTransactionResponse(transaction);
     }
 
     /**
@@ -83,12 +92,18 @@ public class TransactionService {
         // Cache akan dihapus dan direfresh pada pemanggilan berikutnya
     }
 
-    public List<TransactionResponse> getTransactionHistory(User user) {
-        List<Transaction> transactions = transactionRepository.findByUserOrderByTransactionTimeDesc(user);
+    public TransactionHistoryResponse getTransactionHistory(User user, Integer limit, Integer offset) {
+        List<Transaction> transactions = transactionRepositoryCustom.findTransactionHistoryByUser(user, limit, offset);
 
-        return transactions.stream()
+        List<TransactionResponse> transactionResponses = transactions.stream()
                 .map(this::convertToTransactionResponse)
                 .collect(Collectors.toList());
+
+        return TransactionHistoryResponse.builder()
+                .limit(limit != null ? limit.toString() : "null")
+                .offset(offset != null ? offset.toString() : "0")
+                .records(transactionResponses)
+                .build();
     }
 
     private ServiceResponse convertToServiceResponse(ServiceEntity service) {
@@ -102,10 +117,11 @@ public class TransactionService {
 
     private TransactionResponse convertToTransactionResponse(Transaction transaction) {
         return TransactionResponse.builder()
-                .transactionCode(transaction.getTransactionCode())
-                .serviceName(transaction.getServiceName())
-                .nominal(transaction.getNominal().intValue())
-                .transactionTime(transaction.getTransactionTime())
+                .invoiceNumber(transaction.getInvoiceNumber())
+                .description(transaction.getDescription())
+                .transactionType(transaction.getTransactionType().toString())
+                .totalAmount(transaction.getTotalAmount())
+                .createdOn(transaction.getCreatedOn())
                 .build();
     }
 }

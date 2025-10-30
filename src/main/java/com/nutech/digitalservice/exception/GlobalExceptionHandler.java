@@ -3,12 +3,17 @@ package com.nutech.digitalservice.exception;
 import com.nutech.digitalservice.dto.WebResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.UnsupportedMediaTypeStatusException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import jakarta.persistence.PersistenceException;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +32,48 @@ public class GlobalExceptionHandler {
         WebResponse<Object> response = WebResponse.builder()
                 .status(102)
                 .message(firstErrorMessage)
+                .data(null)
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<WebResponse<Object>> handleJsonParseExceptions(HttpMessageNotReadableException ex) {
+        String message = "Format request tidak valid. Pastikan format JSON benar.";
+
+        // Check for specific JSON parsing errors related to numeric fields
+        if (ex.getCause() instanceof InvalidFormatException) {
+            InvalidFormatException cause = (InvalidFormatException) ex.getCause();
+            if (cause.getTargetType() != null &&
+                (cause.getTargetType() == BigDecimal.class ||
+                 cause.getTargetType() == Integer.class ||
+                 cause.getTargetType() == Double.class ||
+                 cause.getTargetType() == Long.class)) {
+                message = "Paramter amount hanya boleh angka dan tidak boleh lebih kecil dari 0";
+            }
+        } else if (ex.getCause() instanceof MismatchedInputException) {
+            MismatchedInputException cause = (MismatchedInputException) ex.getCause();
+            if (cause.getTargetType() != null &&
+                (cause.getTargetType() == BigDecimal.class ||
+                 cause.getTargetType() == Integer.class ||
+                 cause.getTargetType() == Double.class ||
+                 cause.getTargetType() == Long.class)) {
+                message = "Paramter amount hanya boleh angka dan tidak boleh lebih kecil dari 0";
+            }
+        }
+
+        // Check if error message indicates numeric parsing issue
+        if (ex.getMessage() != null &&
+            (ex.getMessage().contains("cannot deserialize value of type") ||
+             ex.getMessage().contains("not a valid") ||
+             ex.getMessage().contains("Unrecognized token"))) {
+            message = "Paramter amount hanya boleh angka dan tidak boleh lebih kecil dari 0";
+        }
+
+        WebResponse<Object> response = WebResponse.builder()
+                .status(102)
+                .message(message)
                 .data(null)
                 .build();
 
@@ -109,6 +156,12 @@ public class GlobalExceptionHandler {
                     .build());
         } else if (ex.getMessage().contains("Saldo tidak mencukupi")) {
             status = 103;
+        } else if (ex.getMessage().contains("Service ataus Layanan tidak ditemukan")) {
+            status = 102;
+            message = "Service ataus Layanan tidak ditemukan";
+        } else if (ex.getMessage().contains("Paramter amount hanya boleh angka dan tidak boleh lebih kecil dari 0")) {
+            status = 102;
+            message = "Paramter amount hanya boleh angka dan tidak boleh lebih kecil dari 0";
         }
 
         // All other runtime errors (including validation errors) get status 102

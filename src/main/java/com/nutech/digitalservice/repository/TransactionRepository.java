@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-    List<Transaction> findByUserOrderByTransactionTimeDesc(User user);
+    List<Transaction> findByUserOrderByCreatedOnDesc(User user);
 
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.user = ?1")
     Long countByUser(User user);

@@ -6,16 +6,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "transactions", indexes = {
     @Index(name = "idx_transactions_user_id", columnList = "user_id"),
-    @Index(name = "idx_transactions_created_at", columnList = "created_at"),
-    @Index(name = "idx_transactions_transaction_time", columnList = "transaction_time"),
-    @Index(name = "idx_transactions_code", columnList = "transaction_code", unique = true),
-    @Index(name = "idx_transactions_type", columnList = "transaction_type")
+    @Index(name = "idx_transactions_created_on", columnList = "created_on"),
+    @Index(name = "idx_transactions_invoice_number", columnList = "invoice_number", unique = true),
+    @Index(name = "idx_transactions_type", columnList = "transaction_type"),
+    @Index(name = "idx_transactions_service_code", columnList = "service_code")
 })
 @Data
 @Builder
@@ -31,38 +30,28 @@ public class Transaction {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "transaction_code", unique = true, nullable = false, length = 50)
-    private String transactionCode;
+    @Column(name = "invoice_number", unique = true, nullable = false, length = 50)
+    private String invoiceNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false, length = 20)
     private TransactionType transactionType;
 
-    @Column(name = "service_name", length = 100)
-    private String serviceName;
+    @Column(name = "service_code", length = 50)
+    private String serviceCode;
 
-    @Column(name = "nominal", precision = 15, scale = 2)
-    private BigDecimal nominal;
+    @Column(name = "description", length = 200)
+    private String description;
 
-    @Column(name = "transaction_time", nullable = false)
-    private LocalDateTime transactionTime;
+    @Column(name = "total_amount", nullable = false)
+    private Long totalAmount;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_on", nullable = false)
+    private Instant createdOn;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        if (transactionTime == null) {
-            transactionTime = LocalDateTime.now();
-        }
-        if (transactionCode == null) {
-            transactionCode = generateTransactionCode();
-        }
-    }
-
-    private String generateTransactionCode() {
-        return "TRX" + System.currentTimeMillis();
+        createdOn = Instant.now();
     }
 
     public enum TransactionType {
