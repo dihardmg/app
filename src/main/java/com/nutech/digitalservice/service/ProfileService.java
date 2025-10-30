@@ -6,7 +6,9 @@ import com.nutech.digitalservice.dto.UpdateProfileRequest;
 import com.nutech.digitalservice.entity.User;
 import com.nutech.digitalservice.exception.FileValidationException;
 import com.nutech.digitalservice.repository.UserRepository;
+import com.nutech.digitalservice.repository.UserRepositoryCustom;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,6 +30,10 @@ public class ProfileService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    @Qualifier("userRepositoryCustomImpl")
+    private UserRepositoryCustom userRepositoryCustom;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -63,16 +69,18 @@ public class ProfileService {
 
     @CacheEvict(value = "profiles", key = "#user.id")
     public ProfileResponse updateProfile(User user, UpdateProfileRequest request) {
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
+        // Update profile menggunakan raw query dengan prepared statement untuk performance dan security
+        User updatedUser = userRepositoryCustom.updateUserProfileWithRawQuery(
+                user.getId(),
+                request.getFirstName(),
+                request.getLastName()
+        );
 
-        user = userRepository.save(user);
-
-        String fullProfileImageUrl = buildFullImageUrl(user.getProfileImage());
+        String fullProfileImageUrl = buildFullImageUrl(updatedUser.getProfileImage());
         return ProfileResponse.builder()
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
+                .email(updatedUser.getEmail())
+                .firstName(updatedUser.getFirstName())
+                .lastName(updatedUser.getLastName())
                 .profileImage(fullProfileImageUrl)
                 .build();
     }

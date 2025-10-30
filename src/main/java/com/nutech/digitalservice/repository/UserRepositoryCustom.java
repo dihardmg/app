@@ -9,4 +9,5 @@ public interface UserRepositoryCustom {
     Optional<User> findByEmailWithRawQuery(String email);
     User insertUserWithRawQuery(String email, String password, String firstName, String lastName);
     boolean existsByEmailWithRawQuery(String email);
+    User updateUserProfileWithRawQuery(Long userId, String firstName, String lastName);
 }

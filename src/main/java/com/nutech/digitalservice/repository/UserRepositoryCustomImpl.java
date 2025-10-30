@@ -107,4 +107,35 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
             return false;
         }
     }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public User updateUserProfileWithRawQuery(Long userId, String firstName, String lastName) {
+        // Raw query dengan prepared statement untuk update user profile
+        String sql = "UPDATE users " +
+                    "SET first_name = ?, last_name = ?, updated_at = ? " +
+                    "WHERE id = ?";
+
+        LocalDateTime now = LocalDateTime.now();
+
+        try {
+            // Execute update dengan prepared statement parameters
+            int result = entityManager.createNativeQuery(sql)
+                    .setParameter(1, firstName)                 // Prepared statement parameter 1
+                    .setParameter(2, lastName)                  // Prepared statement parameter 2
+                    .setParameter(3, Timestamp.valueOf(now))    // Prepared statement parameter 3
+                    .setParameter(4, userId)                    // Prepared statement parameter 4
+                    .executeUpdate();
+
+            if (result > 0) {
+                // Setelah update berhasil, fetch user yang sudah diupdate
+                return findUserByIdRaw(userId)
+                        .orElseThrow(() -> new RuntimeException("Failed to retrieve updated user"));
+            } else {
+                throw new RuntimeException("Failed to update user profile: No rows affected");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update user profile: " + e.getMessage(), e);
+        }
+    }
 }
