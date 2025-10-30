@@ -6,7 +6,10 @@ import com.nutech.digitalservice.dto.RegistrationRequest;
 import com.nutech.digitalservice.entity.Balance;
 import com.nutech.digitalservice.entity.User;
 import com.nutech.digitalservice.repository.BalanceRepository;
+import com.nutech.digitalservice.repository.BalanceRepositoryCustom;
 import com.nutech.digitalservice.repository.UserRepository;
+import com.nutech.digitalservice.repository.UserRepositoryCustom;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.nutech.digitalservice.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,6 +30,14 @@ public class AuthService {
     private BalanceRepository balanceRepository;
 
     @Autowired
+    @Qualifier("userRepositoryCustomImpl")
+    private UserRepositoryCustom userRepositoryCustom;
+
+    @Autowired
+    @Qualifier("balanceRepositoryCustomImpl")
+    private BalanceRepositoryCustom balanceRepositoryCustom;
+
+    @Autowired
     private AuthenticationManager authenticationManager;
 
     @Autowired
@@ -39,25 +50,24 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
 
     public void register(RegistrationRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        // Check if email already exists using raw query with prepared statement
+        if (userRepositoryCustom.existsByEmailWithRawQuery(request.getEmail())) {
             throw new RuntimeException("Email sudah terdaftar");
         }
 
-        User user = User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .build();
+        // Hash password for security
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
 
-        user = userRepository.save(user);
+        // Insert user using raw query with prepared statement
+        User user = userRepositoryCustom.insertUserWithRawQuery(
+                request.getEmail(),
+                hashedPassword,
+                request.getFirstName(),
+                request.getLastName()
+        );
 
-        Balance balance = Balance.builder()
-                .user(user)
-                .balance(0L)
-                .build();
-
-        balanceRepository.save(balance);
+        // Create initial balance using raw query with prepared statement
+        Balance balance = balanceRepositoryCustom.insertBalanceWithRawQuery(user, 0L);
     }
 
     public LoginResponse login(LoginRequest request) {

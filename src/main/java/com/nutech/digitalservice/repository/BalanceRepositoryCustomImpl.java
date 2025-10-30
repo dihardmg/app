@@ -5,6 +5,8 @@ import com.nutech.digitalservice.entity.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -43,6 +45,7 @@ public class BalanceRepositoryCustomImpl implements BalanceRepositoryCustom {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Balance updateBalanceWithRawQuery(User user, Long newBalance) {
         // First update the balance
         String updateSql = "UPDATE balances " +
@@ -74,6 +77,7 @@ public class BalanceRepositoryCustomImpl implements BalanceRepositoryCustom {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Balance insertBalanceWithRawQuery(User user, Long initialBalance) {
         // First insert the balance
         String insertSql = "INSERT INTO balances (user_id, balance, created_at, updated_at) " +

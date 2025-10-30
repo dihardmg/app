@@ -242,9 +242,27 @@ public class TransactionModuleController {
                                     value = """
                                             {
                                                "status": 102,
-                                               "message": "Service ataus Layanan tidak ditemukan",
+                                               "message": "Service status Layanan tidak ditemukan",
                                                "data": null
                                              }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "BAD_REQUEST",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                            {
+                                                 "status": 103,
+                                                 "message": "Saldo tidak mencukupi",
+                                                 "data": null
+                                               }
                                             """
                             )
                     )
