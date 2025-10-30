@@ -58,7 +58,24 @@ public class TransactionModuleController {
                             )
                     )
             ),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "401",
+                     description = "Unauthorized",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                            {
+                                              "status": 108,
+                                              "message": "Token tidak tidak valid atau kadaluwarsa",
+                                              "data": null
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
     @GetMapping("/balance")
     public ResponseEntity<WebResponse<BalanceResponse>> getBalance(@AuthenticationPrincipal User user) {
@@ -79,10 +96,78 @@ public class TransactionModuleController {
     }
 
     @Operation(summary = "Top Up", description = "Digunakan untuk melakukan top up balance / saldo dari User")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements()
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Topup ",
+            content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                            //name = "Login Example",
+                            value = """
+                                    {
+                                       "top_up_amount": 150000
+                                     }
+                                    """
+                    )
+            )
+    )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Request Successfully 200"),
-        @ApiResponse(responseCode = "400", description = "Bad Request 400"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        //@ApiResponse(responseCode = "200", description = "Request Successfully 200"),
+            @ApiResponse(responseCode = "200", description = "Request Successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                                "status": 0,
+                                                "message": "Top Up Balance berhasil",
+                                                "data": {
+                                                  "balance": 150000
+                                                }
+                                              }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "Bad Request 400"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "BAD_REQUEST",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                            {
+                                               "status": 102,
+                                               "message": "Paramter amount hanya boleh angka dan tidak boleh lebih kecil dari 0",
+                                               "data": null
+                                             }
+                                            """
+                            )
+                    )
+            ),
+        @ApiResponse(responseCode = "401", description = "Bad Request 400"),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                            {
+                                              "status": 108,
+                                              "message": "Token tidak tidak valid atau kadaluwarsa",
+                                              "data": null
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
     @PostMapping("/topup")
     public ResponseEntity<WebResponse<BalanceResponse>> topUp(
@@ -105,10 +190,83 @@ public class TransactionModuleController {
     }
 
     @Operation(summary = "Transaction", description = "Digunakan untuk melakukan transaksi dari services / layanan yang tersedia")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements()
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Transasi ",
+            content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                            //name = "Login Example",
+                            value = """
+                                    {
+                                         "serviceCode": "PLN"
+                                       }
+                                    """
+                    )
+            )
+    )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Transaksi Berhasil 200"),
-        @ApiResponse(responseCode = "400", description = "Bad Request 400"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        //@ApiResponse(responseCode = "200", description = "Transaksi Berhasil 200"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Transaksi Berhasil 200",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                            {
+                                                "status": 0,
+                                                "message": "Transaksi berhasil",
+                                                "data": {
+                                                  "invoiceNumber": "INV20251030-000003",
+                                                  "description": "Pulsa Indosat",
+                                                  "transactionType": "PAYMENT",
+                                                  "totalAmount": 40000,
+                                                  "createdOn": "2025-10-30T21:38:33.237312Z"
+                                                }
+                                              }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "BAD_REQUEST",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                            {
+                                               "status": 102,
+                                               "message": "Service ataus Layanan tidak ditemukan",
+                                               "data": null
+                                             }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                            {
+                                              "status": 108,
+                                              "message": "Token tidak tidak valid atau kadaluwarsa",
+                                              "data": null
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
     @PostMapping("/transaction")
     public ResponseEntity<WebResponse<TransactionResponse>> makeTransaction(
@@ -129,7 +287,68 @@ public class TransactionModuleController {
     @Operation(summary = "Transaction History", description = "Digunakan untuk mendapatkan informasi history transaksi")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Get History Transaksi berhasil 200"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Get History Transaksi berhasil 200",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                            {
+                                                 "status": 0,
+                                                 "message": "Get History Berhasil",
+                                                 "data": {
+                                                   "offset": "0",
+                                                   "limit": "null",
+                                                   "records": [
+                                                     {
+                                                       "invoiceNumber": "INV20251030-000003",
+                                                       "description": "Pulsa Indosat",
+                                                       "transactionType": "PAYMENT",
+                                                       "totalAmount": 40000,
+                                                       "createdOn": "2025-10-30T21:38:33.237312Z"
+                                                     },
+                                                     {
+                                                       "invoiceNumber": "INV20251030-000002",
+                                                       "description": "Top Up balance",
+                                                       "transactionType": "TOPUP",
+                                                       "totalAmount": 150000,
+                                                       "createdOn": "2025-10-30T21:35:14.265253Z"
+                                                     },
+                                                     {
+                                                       "invoiceNumber": "INV20251030-000001",
+                                                       "description": "Top Up balance",
+                                                       "transactionType": "TOPUP",
+                                                       "totalAmount": 150000,
+                                                       "createdOn": "2025-10-30T21:27:03.954312Z"
+                                                     }
+                                                   ]
+                                                 }
+                                               }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = WebResponse.class),
+                            examples = @ExampleObject(
+                                    //  name = "Invalid Credentials",
+                                    value = """
+                                            {
+                                              "status": 108,
+                                              "message": "Token tidak tidak valid atau kadaluwarsa",
+                                              "data": null
+                                            }
+                                            """
+                            )
+                    )
+            )
     })
     @GetMapping("/transaction/history")
     public ResponseEntity<WebResponse<TransactionHistoryResponse>> getTransactionHistory(
