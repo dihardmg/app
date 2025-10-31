@@ -1,11 +1,8 @@
 # Railway Configuration for Spring Boot Application
-
-[build]
-builder = "heroku/buildpacks:20"
+# Railway will auto-detect Java/Maven project and build accordingly
 
 [deploy]
 healthcheckPath = "/actuator/health"
 healthcheckTimeout = 30000
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
-startCommand = "java -jar target/digital-service-1.0.0.jar --server.port=$PORT"

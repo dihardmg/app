@@ -78,10 +78,10 @@ For production deployment:
 ## 🔧 Configuration Files
 
 ### `railway.toml`
-- Uses Heroku buildpacks for Java support
+- Uses Railway's auto-detection for Java/Maven projects
 - Configures health check path and restart policies
 - Optimized health check timeout for Railway
-- Includes explicit start command for reliability
+- No custom builder configuration (avoids parse errors)
 
 ### `Procfile`
 - Tells Railway how to run the application
@@ -133,8 +133,9 @@ After deployment, your application will be available at:
 
 1. **Configuration parse error**
    - Ensure `railway.toml` uses valid TOML syntax
-   - Remove invalid builder configurations
-   - Use minimal configuration as shown in the example
+   - Avoid custom `[build]` section with builder configuration
+   - Use minimal configuration with only `[deploy]` section
+   - Railway will auto-detect Java/Maven projects automatically
 
 2. **Build timeout during dependency download**
    - Java 21 has better Railway support than Java 25
