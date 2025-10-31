@@ -78,9 +78,9 @@ For production deployment:
 ## 🔧 Configuration Files
 
 ### `railway.toml`
-- Defines build settings using Heroku buildpacks
+- Minimal configuration using Railway's auto-detection
 - Configures health check path and restart policies
-- Sets environment variables for Java application
+- Railway automatically detects Java/Maven project structure
 
 ### `Procfile`
 - Tells Railway how to run the application
@@ -121,10 +121,16 @@ After deployment, your application will be available at:
 
 ### Common Issues
 
-1. **Application doesn't start**
+1. **Configuration parse error**
+   - Ensure `railway.toml` uses valid TOML syntax
+   - Remove invalid builder configurations
+   - Use minimal configuration as shown in the example
+
+2. **Application doesn't start**
    - Check build logs for compilation errors
    - Ensure all dependencies are available
    - Verify Java version compatibility
+   - Make sure `Procfile` exists and points to correct JAR file
 
 2. **Database connection issues**
    - Verify database addon is properly configured
