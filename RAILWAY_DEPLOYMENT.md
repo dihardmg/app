@@ -78,13 +78,23 @@ For production deployment:
 ## 🔧 Configuration Files
 
 ### `railway.toml`
-- Minimal configuration using Railway's auto-detection
+- Uses Heroku buildpacks for Java support
 - Configures health check path and restart policies
-- Railway automatically detects Java/Maven project structure
+- Optimized health check timeout for Railway
+- Includes explicit start command for reliability
 
 ### `Procfile`
 - Tells Railway how to run the application
 - Uses Railway's `$PORT` variable automatically
+
+### `system.properties`
+- Specifies Java 21 runtime (better Railway support than Java 25)
+- Sets Maven version for consistent builds
+
+### `.mvn/jvm.config`
+- Optimizes JVM memory settings for Railway builds
+- Skips tests during build for faster deployment
+- Configures headless mode for server environment
 
 ### `application-production.properties`
 - Production-optimized configuration
@@ -126,11 +136,18 @@ After deployment, your application will be available at:
    - Remove invalid builder configurations
    - Use minimal configuration as shown in the example
 
-2. **Application doesn't start**
+2. **Build timeout during dependency download**
+   - Java 21 has better Railway support than Java 25
+   - Build skips tests automatically for faster deployment
+   - Memory settings optimized for Railway build environment
+   - Maven wrapper configured for Railway environment
+
+3. **Application doesn't start**
    - Check build logs for compilation errors
    - Ensure all dependencies are available
-   - Verify Java version compatibility
+   - Verify Java version compatibility (now using Java 21)
    - Make sure `Procfile` exists and points to correct JAR file
+   - Check that start command in railway.toml matches JAR filename
 
 2. **Database connection issues**
    - Verify database addon is properly configured
