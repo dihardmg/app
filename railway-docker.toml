@@ -1,0 +1,15 @@
+# Railway Configuration using Docker (if Maven build is too slow)
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 30000
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+# Environment variables for Docker build
+[variables]
+JAVA_VERSION = "21"
+MAVEN_OPTS = "-Xmx1536m -Xms768m"

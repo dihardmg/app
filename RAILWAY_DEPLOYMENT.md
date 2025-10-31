@@ -42,6 +42,27 @@ Set these environment variables in your Railway service:
 - `PORT` - Application port (default: 8081, Railway will set this automatically)
 - `UPLOAD_DIR` - Directory for file uploads (default: /tmp/uploads)
 
+### Alternative: If Maven Build is Too Slow
+
+If the Maven build process is taking too long due to network issues, you have these alternatives:
+
+#### Option A: Use Docker Build (Recommended for slow networks)
+1. Rename `railway-docker.toml` to `railway.toml`
+2. Rename `railway-dockerfile` to `Dockerfile`
+3. Redeploy - this will use Docker multi-stage build with better caching
+
+#### Option B: Use Pre-built JAR
+1. Build locally: `mvn clean package -DskipTests`
+2. Commit the target/digital-service-1.0.0.jar to your repository
+3. Railway will skip Maven build and use the existing JAR
+
+#### Option C: Optimize Current Maven Build
+The current configuration already includes:
+- Aliyun Maven mirror for faster downloads in Asia
+- All test and documentation generation skipped
+- Optimized JVM settings for Railway environment
+- Dependency caching through Maven wrapper
+
 ### 4. Automatic Configuration
 
 The application is pre-configured to work with Railway automatically:
@@ -93,8 +114,14 @@ For production deployment:
 
 ### `.mvn/jvm.config`
 - Optimizes JVM memory settings for Railway builds
-- Skips tests during build for faster deployment
+- Skips tests, javadoc, source generation, and many unnecessary Maven steps
 - Configures headless mode for server environment
+- Enables compilation optimization for faster builds
+
+### `.mvn/settings.xml`
+- Uses Aliyun Maven mirror for faster dependency downloads in Asia
+- Enables Railway-optimized profile for better performance
+- Reduces network latency significantly
 
 ### `application-production.properties`
 - Production-optimized configuration
