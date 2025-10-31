@@ -10,6 +10,7 @@ import com.nutech.digitalservice.repository.BalanceRepositoryCustom;
 import com.nutech.digitalservice.repository.ServiceRepository;
 import com.nutech.digitalservice.repository.TransactionRepositoryCustom;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@ConditionalOnProperty(name = "app.database.enabled", havingValue = "true", matchIfMissing = true)
 public class TransactionService {
 
     @Autowired

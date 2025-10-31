@@ -8,12 +8,14 @@ import com.nutech.digitalservice.repository.BalanceRepositoryCustom;
 import com.nutech.digitalservice.repository.TransactionRepository;
 import com.nutech.digitalservice.repository.TransactionRepositoryCustom;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
+@ConditionalOnProperty(name = "app.database.enabled", havingValue = "true", matchIfMissing = true)
 public class BalanceService {
 
     @Autowired
