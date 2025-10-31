@@ -1,0 +1,6 @@
+# Minimal Railway Configuration - No Health Check
+# Fastest deployment to Railway
+
+# No build section - Railway auto-detects Java/Maven
+# No deploy section - No health check needed
+# Railway will deploy as soon as build completes

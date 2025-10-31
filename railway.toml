@@ -1,10 +1,7 @@
 # Railway Configuration for Spring Boot Application
 # Railway will auto-detect Java/Maven project and build accordingly
+# No health check - direct deployment
 
 [deploy]
-healthcheckPath = "/actuator/health"
-healthcheckTimeout = 120000
-healthcheckWait = 180000
 restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 10
-startTimeout = 600000
+restartPolicyMaxRetries = 3

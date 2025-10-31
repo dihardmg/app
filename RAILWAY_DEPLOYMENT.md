@@ -80,16 +80,23 @@ The application is pre-configured to work with Railway automatically:
 - API docs at: `https://your-app.railway.app/api-docs`
 - Base URL is automatically detected by SpringDoc OpenAPI
 
-### 5. Health Check
+### 5. Deployment Status
 
-Railway will automatically monitor your application using the `/actuator/health` endpoint. The application includes:
+**No Health Check Required** - Railway will deploy your application immediately after build completion:
 
-- Health check endpoint
-- Application info endpoint
-- Automatic restart on failure
-- Connection pooling for database efficiency
+- ✅ Direct deployment (no health check waiting)
+- ✅ Automatic restart on failure (up to 3 retries)
+- ✅ Connection pooling for database efficiency
+- ✅ Fast deployment - no startup timeout
 
-### 6. File Uploads
+### 6. Accessing Your Application
+
+After successful build, your application will be immediately available at:
+- **API**: `https://your-app.railway.app`
+- **Swagger UI**: `https://your-app.railway.app/swagger-ui.html`
+- **API Documentation**: `https://your-app.railway.app/api-docs`
+
+### 7. File Uploads
 
 For production deployment:
 - File uploads are stored in `/tmp/uploads` directory
