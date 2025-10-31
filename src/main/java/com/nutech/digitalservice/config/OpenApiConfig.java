@@ -9,17 +9,21 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class OpenApiConfig {
 
+    @Value("${app.base.url:http://localhost:8081}")
+    private String baseUrl;
+
     @Bean
     public OpenAPI customOpenAPI() {
         Server server = new Server()
-                .url("http://localhost:8081")
-                .description("Development server");
+                .url(baseUrl)
+                .description(getServerDescription());
 
         return new OpenAPI()
                 .addServersItem(server)
@@ -48,5 +52,15 @@ public class OpenApiConfig {
                 .group("All APIs")
                 .packagesToScan("com.nutech.digitalservice.controller")
                 .build();
+    }
+
+    private String getServerDescription() {
+        if (baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1")) {
+            return "Development server";
+        } else if (baseUrl.contains("railway.app")) {
+            return "Railway production server";
+        } else {
+            return "Production server";
+        }
     }
 }

@@ -23,5 +23,5 @@ RUN ./mvnw clean package -DskipTests
 # Expose port 8081
 EXPOSE 8081
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "target/digital-service-1.0.0.jar"]
+# Run the application with Railway profile if environment variable is set
+ENTRYPOINT ["java", "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-default}", "-jar", "target/digital-service-1.0.0.jar"]
