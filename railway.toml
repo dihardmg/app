@@ -3,6 +3,8 @@
 
 [deploy]
 healthcheckPath = "/actuator/health"
-healthcheckTimeout = 30000
+healthcheckTimeout = 120000
+healthcheckWait = 180000
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
+startTimeout = 600000
