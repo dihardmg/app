@@ -1,7 +1,15 @@
 # Railway Configuration for Spring Boot Application
-# Railway will auto-detect Java/Maven project and build accordingly
-# No health check - direct deployment
+# Following YouTube tutorial best practices
+
+[build]
+builder = "nixpacks"
 
 [deploy]
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 120000
 restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
+restartPolicyMaxRetries = 5
+
+[variables]
+PORT = "8081"
+SPRING_PROFILES_ACTIVE = "production"

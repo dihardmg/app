@@ -1,1 +1,1 @@
-web: java -Xmx512m -Xms256m -jar target/digital-service-1.0.0.jar --server.port=$PORT
+web: java -Xmx512m -Xms256m -jar target/digital-service-1.0.0.jar --server.port=$PORT --spring.profiles.active=production
