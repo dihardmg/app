@@ -1,5 +1,5 @@
 # Railway Configuration for Spring Boot Application
-# Following YouTube tutorial best practices
+# Following YouTube tutorial best practices with Java 25
 
 [build]
 builder = "nixpacks"
@@ -13,3 +13,7 @@ restartPolicyMaxRetries = 5
 [variables]
 PORT = "8081"
 SPRING_PROFILES_ACTIVE = "production"
+
+[nixpacks]
+# Use Java 25 for Spring Boot deployment
+pkgs = ["jdk25", "maven"]
