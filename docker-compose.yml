@@ -4,9 +4,12 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/app_db
-      - SPRING_DATASOURCE_USERNAME=user
-      - SPRING_DATASOURCE_PASSWORD=password
+      # - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/app_db
+      # - SPRING_DATASOURCE_USERNAME=user
+      # - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}
+      - SPRING_DATASOURCE_USERNAME=${{Postgres.POSTGRES_USER}}
+      - SPRING_DATASOURCE_PASSWORD=${{Postgres.PGPASSWORD}}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRINGDOC_API_DOCS_PATH=/api-docs
       - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
