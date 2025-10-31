@@ -18,7 +18,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         Server server = new Server()
-                .url("http://localhost:8081")
+                .url("app.base.url")
                 .description("Development server");
 
         return new OpenAPI()
