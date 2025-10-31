@@ -1,6 +1,6 @@
 #  Service API
 
-**Service API** adalah RESTful API service berbasis Spring Boot untuk development yang menyediakan layanan transaksi digital termasuk manajemen membership, layanan informasi, dan pemrosesan transaksi. Sistem ini mengimplementasikan fungsionalitas dengan JWT authentication, database PostgreSQL, dan deployment Docker.
+**Service API** adalah RESTful API service berbasis Spring Boot untuk development yang menyediakan layanan transaksi digital termasuk manajemen membership, layanan informasi, dan pemrosesan transaksi. Sistem ini mengimplementasikan fungsionalitas dengan JWT authentication dan database PostgreSQL.
 
 ## 🌟 Features
 
@@ -34,16 +34,14 @@
 ### Development Tools
 - **Lombok 1.18.42** - Code generation
 - **Maven** - Build management
-- **Docker & Docker Compose** - Containerization
 
 ## ✅ Prerequisites
 
 - **Java 25** atau lebih tinggi
 - **Maven 3.8+**
-- **Docker dan Docker Compose**
-- **PostgreSQL** (atau gunakan Docker container)
+- **PostgreSQL** (installed locally)
 
-## 🚀 Running with Docker (Recommended)
+## 🚀 Quick Start
 
 ### 1. Clone Repository
 ```bash
@@ -51,19 +49,46 @@ git clone https://github.com/dihardmg/app.git
 cd app
 ```
 
-### 2. Build dan Run dengan Docker Compose
-```bash
-# Build dan jalankan semua services
-docker-compose up --build
-
-# Jalankan di background
-docker-compose up -d --build
+### 2. Database Setup
+Buat database dan user di PostgreSQL lokal Anda:
+```sql
+CREATE DATABASE app_db;
+CREATE USER user WITH PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE app_db TO user;
 ```
 
-### 3. Aplikasi akan tersedia di:
+### 3. Build dan Run Aplikasi
+```bash
+# Build project
+mvn clean package
+
+# Run dengan Maven
+mvn clean spring-boot:run
+
+# Atau run JAR yang sudah dibuild
+java -jar target/digital-service-1.0.0.jar
+```
+
+### 4. Aplikasi akan tersedia di:
 - **API**: http://localhost:8081
 - **Swagger UI**: http://localhost:8081/swagger-ui.html
 - **API Docs**: http://localhost:8081/api-docs
+
+## 🚂 Railway Deployment
+
+Cara mudah untuk deploy ke production menggunakan Railway. Lihat [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) untuk panduan lengkap.
+
+### Quick Deploy ke Railway
+1. Push code ke GitHub repository
+2. Connect repository ke Railway
+3. Add PostgreSQL database di Railway
+4. Set environment variable: `SPRING_PROFILES_ACTIVE=production`
+5. Deploy! 🎉
+
+**Setelah deploy ke Railway, aplikasi akan otomatis:**
+- Menggunakan database PostgreSQL dari Railway
+- Menggunakan domain Railway untuk API dan Swagger UI
+- Konfigurasi otomatis untuk production environment
 
 ## 🌐 API Endpoints
 
@@ -254,7 +279,7 @@ Semua API mengikuti format response standar:
 ### Environment Variables
 ```bash
 # Database Configuration
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/app_db
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/app_db
 SPRING_DATASOURCE_USERNAME=user
 SPRING_DATASOURCE_PASSWORD=password
 
@@ -308,13 +333,7 @@ java -jar target/digital-service-1.0.0.jar
 ## 📝 Logging
 
 ### Application Logs
-```bash
-# View real-time logs
-docker-compose logs -f app
-
-# View specific log levels
-docker-compose logs app | grep ERROR
-```
+Aplikasi menggunakan logging standar Spring Boot dan akan menampilkan log di console saat dijalankan.
 
 #### 3. JWT Token Issues
 - Pastikan token tidak expired (default 12 jam)
