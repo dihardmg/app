@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -43,8 +44,8 @@ public class Transaction {
     @Column(name = "description", length = 200)
     private String description;
 
-    @Column(name = "total_amount", nullable = false)
-    private Long totalAmount;
+    @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal totalAmount;
 
     @Column(name = "created_on", nullable = false)
     private Instant createdOn;

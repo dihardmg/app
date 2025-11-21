@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -29,12 +30,17 @@ public class BalanceRepositoryCustomImpl implements BalanceRepositoryCustom {
                     .getSingleResult();
 
             if (result != null) {
+                BigDecimal dbBalance = BigDecimal.valueOf(((Number) result[2]).doubleValue());
+                System.out.println("DEBUG findByUserWithRawQuery - DB Balance: " + dbBalance);
+
                 Balance balance = new Balance();
                 balance.setId(((Number) result[0]).longValue());
                 balance.setUser(user);
-                balance.setBalance(((Number) result[2]).longValue());
+                balance.setBalance(dbBalance);
                 balance.setCreatedAt(((Timestamp) result[3]).toLocalDateTime());
                 balance.setUpdatedAt(((Timestamp) result[4]).toLocalDateTime());
+
+                System.out.println("DEBUG findByUserWithRawQuery - Entity Balance: " + balance.getBalance());
                 return Optional.of(balance);
             }
         } catch (Exception e) {
@@ -46,17 +52,21 @@ public class BalanceRepositoryCustomImpl implements BalanceRepositoryCustom {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Balance updateBalanceWithRawQuery(User user, Long newBalance) {
+    public Balance updateBalanceWithRawQuery(User user, BigDecimal newBalance) {
         // First update the balance
         String updateSql = "UPDATE balances " +
                          "SET balance = ?, updated_at = ? " +
                          "WHERE user_id = ?";
 
-        entityManager.createNativeQuery(updateSql)
+        System.out.println("DEBUG updateBalanceWithRawQuery - User " + user.getId() + " updating to: " + newBalance);
+
+        int updateCount = entityManager.createNativeQuery(updateSql)
                 .setParameter(1, newBalance)
                 .setParameter(2, Timestamp.valueOf(LocalDateTime.now()))
                 .setParameter(3, user.getId())
                 .executeUpdate();
+
+        System.out.println("DEBUG updateBalanceWithRawQuery - Update count: " + updateCount);
 
         // Then fetch the updated record
         String selectSql = "SELECT id, user_id, balance, created_at, updated_at " +
@@ -69,7 +79,7 @@ public class BalanceRepositoryCustomImpl implements BalanceRepositoryCustom {
         Balance balance = new Balance();
         balance.setId(((Number) result[0]).longValue());
         balance.setUser(user);
-        balance.setBalance(((Number) result[2]).longValue());
+        balance.setBalance(BigDecimal.valueOf(((Number) result[2]).doubleValue()));
         balance.setCreatedAt(((Timestamp) result[3]).toLocalDateTime());
         balance.setUpdatedAt(((Timestamp) result[4]).toLocalDateTime());
 
@@ -78,7 +88,7 @@ public class BalanceRepositoryCustomImpl implements BalanceRepositoryCustom {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Balance insertBalanceWithRawQuery(User user, Long initialBalance) {
+    public Balance insertBalanceWithRawQuery(User user, BigDecimal initialBalance) {
         // First insert the balance
         String insertSql = "INSERT INTO balances (user_id, balance, created_at, updated_at) " +
                           "VALUES (?, ?, ?, ?)";
@@ -102,7 +112,7 @@ public class BalanceRepositoryCustomImpl implements BalanceRepositoryCustom {
         Balance balance = new Balance();
         balance.setId(((Number) result[0]).longValue());
         balance.setUser(user);
-        balance.setBalance(((Number) result[2]).longValue());
+        balance.setBalance(BigDecimal.valueOf(((Number) result[2]).doubleValue()));
         balance.setCreatedAt(((Timestamp) result[3]).toLocalDateTime());
         balance.setUpdatedAt(((Timestamp) result[4]).toLocalDateTime());
 

@@ -17,7 +17,7 @@ CREATE INDEX idx_users_created_at ON users(created_at);
 CREATE TABLE balances (
                           id SERIAL PRIMARY KEY,
                           user_id INTEGER NOT NULL UNIQUE,
-                          balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+                          balance DECIMAL(19,2) NOT NULL DEFAULT 0.00,
                           created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           CONSTRAINT fk_balances_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -34,7 +34,7 @@ CREATE TABLE transactions (
                               transaction_type VARCHAR(20) NOT NULL,
                               service_code VARCHAR(50),
                               description VARCHAR(200),
-                              total_amount DECIMAL(15,2) NOT NULL,
+                              total_amount DECIMAL(19,2) NOT NULL,
                               created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                               CONSTRAINT fk_transactions_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

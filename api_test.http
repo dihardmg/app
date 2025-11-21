@@ -11,8 +11,7 @@
 @firstName = Didij
 @lastName = User
 @password = Password123!
-@token = eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6InRlc3R1c2VyQGV4YW1wbGUuY29tIiwic3ViIjoidGVzdHVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjE4Mjk0MDUsImV4cCI6MTc2MTg3MjYwNX0.Ekg8pX-mfKx8-eik1LwTv_nG-cibnhJXCuBolCxiCCY
-
+@token = eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6InRlc3R1c2VyQGV4YW1wbGUuY29tIiwic3ViIjoidGVzdHVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjM3MTgzMjYsImV4cCI6MTc2Mzc2MTUyNn0.bVyCqP9Z-us7fbxlx_pH6DFe-iIFEeTAyFvqBN7Rk_0
 
 # ===================================================================
 # 1. MODULE MEMBERSHIP
@@ -326,7 +325,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "top_up_amount": 100000
+  "top_up_amount": 50.60
 }
 
 ### 3.3 Top Up Balance - Rp 50.000

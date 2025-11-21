@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -62,7 +63,7 @@ public class TransactionRepositoryCustomImpl implements TransactionRepositoryCus
                 transaction.setTransactionType(Transaction.TransactionType.valueOf((String) result[2]));
                 transaction.setServiceCode((String) result[3]);
                 transaction.setDescription((String) result[4]);
-                transaction.setTotalAmount(((Number) result[5]).longValue());
+                transaction.setTotalAmount(BigDecimal.valueOf(((Number) result[5]).doubleValue()));
                 transaction.setCreatedOn(((Timestamp) result[6]).toLocalDateTime().toInstant(java.time.ZoneOffset.UTC));
                 transaction.setUser(user);
                 transactions.add(transaction);
@@ -76,7 +77,7 @@ public class TransactionRepositoryCustomImpl implements TransactionRepositoryCus
 
     @Override
     public Transaction insertTransactionWithRawQuery(User user, String invoiceNumber, String transactionType,
-                                                    String serviceCode, String description, Long totalAmount) {
+                                                    String serviceCode, String description, BigDecimal totalAmount) {
         String sql = "INSERT INTO transactions (user_id, invoice_number, transaction_type, service_code, " +
                     "description, total_amount, created_on) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?) " +
@@ -98,7 +99,7 @@ public class TransactionRepositoryCustomImpl implements TransactionRepositoryCus
         transaction.setTransactionType(Transaction.TransactionType.valueOf((String) result[2]));
         transaction.setServiceCode((String) result[3]);
         transaction.setDescription((String) result[4]);
-        transaction.setTotalAmount(((Number) result[5]).longValue());
+        transaction.setTotalAmount(BigDecimal.valueOf(((Number) result[5]).doubleValue()));
         transaction.setCreatedOn(((Timestamp) result[6]).toLocalDateTime().toInstant(java.time.ZoneOffset.UTC));
         transaction.setUser(user);
 
@@ -131,21 +132,24 @@ public class TransactionRepositoryCustomImpl implements TransactionRepositoryCus
     }
 
     @Override
-    public Long getCurrentBalance(User user) {
+    public BigDecimal getCurrentBalance(User user) {
         String sql = "SELECT balance FROM balances WHERE user_id = ?";
         try {
             Object result = entityManager.createNativeQuery(sql)
                     .setParameter(1, user.getId())
                     .getSingleResult();
-            return ((Number) result).longValue();
+            BigDecimal balance = BigDecimal.valueOf(((Number) result).doubleValue());
+            System.out.println("DEBUG getCurrentBalance for user " + user.getId() + ": " + balance);
+            return balance;
         } catch (Exception e) {
-            // Return 0L if no balance record found or any other error
-            return 0L;
+            // Return 0 if no balance record found or any other error
+            System.out.println("DEBUG getCurrentBalance exception: " + e.getMessage());
+            return BigDecimal.ZERO;
         }
     }
 
     @Override
-    public void updateBalanceWithRawQuery(User user, Long newBalance) {
+    public void updateBalanceWithRawQuery(User user, BigDecimal newBalance) {
         String sql = "UPDATE balances SET balance = ?, updated_at = ? WHERE user_id = ?";
         entityManager.createNativeQuery(sql)
                 .setParameter(1, newBalance)
@@ -168,12 +172,12 @@ public class TransactionRepositoryCustomImpl implements TransactionRepositoryCus
     }
 
     @Override
-    public Optional<Long> getServiceTariffByCode(String serviceCode) {
+    public Optional<BigDecimal> getServiceTariffByCode(String serviceCode) {
         String sql = "SELECT service_tariff FROM services WHERE service_code = ? AND active = true";
         try {
-            Long result = ((Number) entityManager.createNativeQuery(sql)
+            BigDecimal result = BigDecimal.valueOf(((Number) entityManager.createNativeQuery(sql)
                     .setParameter(1, serviceCode)
-                    .getSingleResult()).longValue();
+                    .getSingleResult()).doubleValue());
             return Optional.of(result);
         } catch (Exception e) {
             return Optional.empty();

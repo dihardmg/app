@@ -15,6 +15,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -50,22 +52,22 @@ public class TransactionService {
             throw new RuntimeException("Service ataus Layanan tidak ditemukan");
         }
 
-        Optional<Long> serviceTariffOpt = transactionRepositoryCustom.getServiceTariffByCode(serviceCode);
+        Optional<BigDecimal> serviceTariffOpt = transactionRepositoryCustom.getServiceTariffByCode(serviceCode);
         if (serviceTariffOpt.isEmpty()) {
             throw new RuntimeException("Service ataus Layanan tidak ditemukan");
         }
 
-        Long serviceTariff = serviceTariffOpt.get();
+        BigDecimal serviceTariff = serviceTariffOpt.get();
         String serviceName = serviceNameOpt.get();
 
         // Check current balance using raw query
-        Long currentBalance = transactionRepositoryCustom.getCurrentBalance(user);
-        if (currentBalance < serviceTariff) {
+        BigDecimal currentBalance = transactionRepositoryCustom.getCurrentBalance(user);
+        if (currentBalance.compareTo(serviceTariff) < 0) {
             throw new RuntimeException("Saldo tidak mencukupi");
         }
 
         // Update balance using raw query
-        Long newBalance = currentBalance - serviceTariff;
+        BigDecimal newBalance = currentBalance.subtract(serviceTariff);
         transactionRepositoryCustom.updateBalanceWithRawQuery(user, newBalance);
 
         // Generate invoice number
@@ -107,21 +109,21 @@ public class TransactionService {
     }
 
     private ServiceResponse convertToServiceResponse(ServiceEntity service) {
-        return ServiceResponse.builder()
-                .serviceCode(service.getServiceCode())
-                .serviceName(service.getServiceName())
-                .serviceIcon(service.getServiceIcon())
-                .serviceTariff(service.getServiceTariff().intValue())
-                .build();
+        return ServiceResponse.fromBigDecimal(
+                service.getServiceCode(),
+                service.getServiceName(),
+                service.getServiceIcon(),
+                service.getServiceTariff()
+        );
     }
 
     private TransactionResponse convertToTransactionResponse(Transaction transaction) {
-        return TransactionResponse.builder()
-                .invoiceNumber(transaction.getInvoiceNumber())
-                .description(transaction.getDescription())
-                .transactionType(transaction.getTransactionType().toString())
-                .totalAmount(transaction.getTotalAmount())
-                .createdOn(transaction.getCreatedOn())
-                .build();
+        return TransactionResponse.fromEntity(
+                transaction.getInvoiceNumber(),
+                transaction.getDescription(),
+                transaction.getTransactionType().toString(),
+                transaction.getTotalAmount(),
+                transaction.getCreatedOn()
+        );
     }
 }

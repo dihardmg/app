@@ -81,9 +81,7 @@ public class TransactionModuleController {
     public ResponseEntity<WebResponse<BalanceResponse>> getBalance(@AuthenticationPrincipal User user) {
         Balance balance = balanceService.getBalance(user);
 
-        BalanceResponse balanceResponse = BalanceResponse.builder()
-                .balance(balance.getBalance())
-                .build();
+        BalanceResponse balanceResponse = BalanceResponse.fromBigDecimal(balance.getBalance());
 
         WebResponse<BalanceResponse> response = WebResponse.<BalanceResponse>builder()
                 .status(0)
@@ -105,7 +103,7 @@ public class TransactionModuleController {
                             //name = "Login Example",
                             value = """
                                     {
-                                       "top_up_amount": 150000
+                                       "top_up_amount": 150.00
                                      }
                                     """
                     )
@@ -123,7 +121,7 @@ public class TransactionModuleController {
                                                 "status": 0,
                                                 "message": "Top Up Balance berhasil",
                                                 "data": {
-                                                  "balance": 150000
+                                                  "balance": 150.00
                                                 }
                                               }
                                             """
@@ -176,9 +174,8 @@ public class TransactionModuleController {
 
         Balance balance = balanceService.topUp(user, request.getTop_up_amount());
 
-        BalanceResponse balanceResponse = BalanceResponse.builder()
-                .balance(request.getTop_up_amount())
-                .build();
+        // Display the top-up amount, not the total balance
+        BalanceResponse balanceResponse = BalanceResponse.fromBigDecimal(request.getTop_up_amount());
 
         WebResponse<BalanceResponse> response = WebResponse.<BalanceResponse>builder()
                 .status(0)

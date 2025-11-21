@@ -5,6 +5,8 @@ import com.nutech.digitalservice.dto.LoginResponse;
 import com.nutech.digitalservice.dto.RegistrationRequest;
 import com.nutech.digitalservice.entity.Balance;
 import com.nutech.digitalservice.entity.User;
+
+import java.math.BigDecimal;
 import com.nutech.digitalservice.repository.BalanceRepository;
 import com.nutech.digitalservice.repository.BalanceRepositoryCustom;
 import com.nutech.digitalservice.repository.UserRepository;
@@ -67,7 +69,7 @@ public class AuthService {
         );
 
         // Create initial balance using raw query with prepared statement
-        Balance balance = balanceRepositoryCustom.insertBalanceWithRawQuery(user, 0L);
+        Balance balance = balanceRepositoryCustom.insertBalanceWithRawQuery(user, BigDecimal.ZERO);
     }
 
     public LoginResponse login(LoginRequest request) {

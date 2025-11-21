@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,9 +28,9 @@ public class Balance {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 2)
     @Builder.Default
-    private Long balance = 0L;
+    private BigDecimal balance = BigDecimal.ZERO;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -42,7 +43,7 @@ public class Balance {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (balance == null) {
-            balance = 0L;
+            balance = BigDecimal.ZERO;
         }
     }
 

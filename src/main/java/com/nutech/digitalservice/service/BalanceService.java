@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 
 @Service
@@ -37,18 +39,26 @@ public class BalanceService {
         }
 
         // If no balance record exists, create one with 0 balance
-        Balance newBalance = balanceRepositoryCustom.insertBalanceWithRawQuery(user, 0L);
+        Balance newBalance = balanceRepositoryCustom.insertBalanceWithRawQuery(user, BigDecimal.ZERO);
         return newBalance;
     }
 
     @Transactional
-    public Balance topUp(User user, Long amount) {
-        if (amount <= 0) {
-            throw new RuntimeException("Paramter amount hanya boleh angka dan tidak boleh lebih kecil dari 0");
+    public Balance topUp(User user, BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Parameter amount hanya boleh angka dan tidak boleh lebih kecil dari 0");
         }
 
-        Long currentBalance = transactionRepositoryCustom.getCurrentBalance(user);
-        Long newBalance = currentBalance + amount;
+        BigDecimal currentBalance = transactionRepositoryCustom.getCurrentBalance(user);
+        BigDecimal roundedAmount = amount.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal newBalance = currentBalance.add(roundedAmount).setScale(2, RoundingMode.HALF_UP);
+
+        // Debug logging
+        System.out.println("DEBUG TOPUP:");
+        System.out.println("  Amount requested: " + amount);
+        System.out.println("  Current balance: " + currentBalance);
+        System.out.println("  Rounded amount: " + roundedAmount);
+        System.out.println("  New balance: " + newBalance);
 
         // Update balance using raw query
         transactionRepositoryCustom.updateBalanceWithRawQuery(user, newBalance);
@@ -61,11 +71,14 @@ public class BalanceService {
                 "TOPUP",
                 null,
                 "Top Up balance",
-                amount
+                roundedAmount
         );
 
         // Return updated balance
-        return balanceRepositoryCustom.findByUserWithRawQuery(user)
+        Balance updatedBalance = balanceRepositoryCustom.findByUserWithRawQuery(user)
                 .orElseThrow(() -> new RuntimeException("Balance not found for user after update"));
+
+        System.out.println("DEBUG - Final balance after topup: " + updatedBalance.getBalance());
+        return updatedBalance;
     }
 }

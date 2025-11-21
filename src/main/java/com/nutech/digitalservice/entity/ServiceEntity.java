@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "services", indexes = {
     @Index(name = "idx_services_service_code", columnList = "service_code", unique = true),
@@ -30,8 +32,8 @@ public class ServiceEntity {
     @Column(name = "service_icon", length = 500)
     private String serviceIcon;
 
-    @Column(name = "service_tariff", nullable = false)
-    private Long serviceTariff;
+    @Column(name = "service_tariff", nullable = false, precision = 19, scale = 2)
+    private BigDecimal serviceTariff;
 
     @Builder.Default
     @Column(nullable = true)
