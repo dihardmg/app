@@ -62,7 +62,7 @@ docker-compose up -d --build
 
 ### 3. Aplikasi akan tersedia di:
 - **API**: http://localhost:8081
-- **Swagger UI**: http://localhost:8081/swagger-ui.html
+- **Swagger UI**: http://localhost:8081/swagger-ui/index.html#/
 - **API Docs**: http://localhost:8081/api-docs
 
 ## 🌐 API Endpoints
@@ -302,7 +302,7 @@ java -jar target/digital-service-1.0.0.jar
 
 ### Akses Aplikasi
 - **API**: http://localhost:8081
-- **Swagger UI**: http://localhost:8081/swagger-ui.html
+- **Swagger UI**: http://localhost:8081/swagger-ui/index.html#/
 
 
 ## 📝 Logging
