@@ -8,11 +8,16 @@ services:
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_CACHE_REDIS_TIME-TO-LIVE=1800000
       - SPRINGDOC_API_DOCS_PATH=/api-docs
       - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
       - SPRINGDOC_SWAGGER_UI_OPERATIONS_SORTER=method
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - app-network
@@ -37,8 +42,39 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: 'redis:7-alpine'
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - '8082:8081'
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - HTTP_USER=admin
+      - HTTP_PASSWORD=admin123
+
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   app-network:

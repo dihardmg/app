@@ -7,12 +7,16 @@ import com.nutech.digitalservice.entity.User;
 import com.nutech.digitalservice.exception.FileValidationException;
 import com.nutech.digitalservice.repository.UserRepository;
 import com.nutech.digitalservice.repository.UserRepositoryCustom;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -25,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class ProfileService {
 
@@ -34,6 +39,9 @@ public class ProfileService {
     @Autowired
     @Qualifier("userRepositoryCustomImpl")
     private UserRepositoryCustom userRepositoryCustom;
+
+    @Autowired
+    private CacheManager cacheManager;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -50,8 +58,25 @@ public class ProfileService {
             ".jpg", ".jpeg", ".png"
     );
 
-    @Cacheable(value = "profiles", key = "#user.id")
+    @Cacheable(value = "profiles", key = "#user.id", unless = "#result == null")
     public ProfileResponse getProfile(User user) {
+        log.info("Fetching profile from database for user ID: {}", user.getId());
+
+        // Debug cache manager
+        if (cacheManager != null) {
+            log.info("Cache Manager available: {}", cacheManager.getClass().getSimpleName());
+            log.info("Cache names available: {}", cacheManager.getCacheNames());
+
+            var profileCache = cacheManager.getCache("profiles");
+            if (profileCache != null) {
+                log.info("Profiles cache is available");
+            } else {
+                log.warn("Profiles cache is NOT available!");
+            }
+        } else {
+            log.error("Cache Manager is NULL!");
+        }
+
         // Menggunakan raw query dengan prepared statement untuk performance yang lebih baik
         Optional<User> userOpt = userRepository.findUserByIdRaw(user.getId());
 
@@ -59,16 +84,30 @@ public class ProfileService {
         User userProfile = userOpt.orElse(user);
 
         String fullProfileImageUrl = buildFullImageUrl(userProfile.getProfileImage());
-        return ProfileResponse.builder()
+        ProfileResponse profileResponse = ProfileResponse.builder()
                 .email(userProfile.getEmail())
                 .firstName(userProfile.getFirstName())
                 .lastName(userProfile.getLastName())
                 .profileImage(fullProfileImageUrl)
                 .build();
+
+        log.info("Profile data processed for user ID: {}, cache key will be: profiles::{}", user.getId(), user.getId());
+
+        // Check if value is null (should not be cached if null)
+        if (profileResponse == null) {
+            log.warn("Profile response is null, will not be cached");
+        } else {
+            log.info("Profile response is not null, will be cached with key: profiles::{}", user.getId());
+        }
+
+        return profileResponse;
     }
 
-    @CacheEvict(value = "profiles", key = "#user.id")
+    @Transactional
+    @CachePut(value = "profiles", key = "#user.id")
     public ProfileResponse updateProfile(User user, UpdateProfileRequest request) {
+        log.info("Updating profile for user ID: {}", user.getId());
+
         // Update profile menggunakan raw query dengan prepared statement untuk performance dan security
         User updatedUser = userRepositoryCustom.updateUserProfileWithRawQuery(
                 user.getId(),
@@ -77,15 +116,19 @@ public class ProfileService {
         );
 
         String fullProfileImageUrl = buildFullImageUrl(updatedUser.getProfileImage());
-        return ProfileResponse.builder()
+        ProfileResponse profileResponse = ProfileResponse.builder()
                 .email(updatedUser.getEmail())
                 .firstName(updatedUser.getFirstName())
                 .lastName(updatedUser.getLastName())
                 .profileImage(fullProfileImageUrl)
                 .build();
+
+        log.info("Profile updated and cached for user ID: {}", user.getId());
+        return profileResponse;
     }
 
-    @CacheEvict(value = "profiles", key = "#user.id")
+    @Transactional
+    @CachePut(value = "profiles", key = "#user.id")
     public ProfileResponse updateProfileImage(User user, ImageUploadRequest request) {
         MultipartFile file = request.getFile();
 
@@ -233,5 +276,43 @@ public class ProfileService {
         // Remove leading slash if present to avoid double slashes
         String cleanPath = relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
         return baseUrl + "/" + cleanPath;
+    }
+
+    /**
+     * Method untuk menghapus cache profile secara manual
+     * @param userId User ID untuk cache yang akan dihapus
+     */
+    public void evictProfileCache(Long userId) {
+        log.info("Manually evicting profile cache for user ID: {}", userId);
+        cacheManager.getCache("profiles").evict(userId);
+    }
+
+    /**
+     * Method untuk refresh profile cache
+     * @param user User untuk refresh cache
+     * @return ProfileResponse yang baru
+     */
+    @CacheEvict(value = "profiles", key = "#user.id")
+    public ProfileResponse refreshProfileCache(User user) {
+        log.info("Refreshing profile cache for user ID: {}", user.getId());
+        return getProfile(user);
+    }
+
+    /**
+     * Method untuk membersihkan semua profile cache
+     * Digunakan untuk admin operations atau data synchronization
+     */
+    public void evictAllProfileCache() {
+        log.info("Evicting all profile caches");
+        cacheManager.getCache("profiles").clear();
+    }
+
+    /**
+     * Method untuk checking cache status
+     * @param userId User ID untuk checking cache
+     * @return boolean apakah data ada di cache
+     */
+    public boolean isProfileCached(Long userId) {
+        return cacheManager.getCache("profiles").get(userId) != null;
     }
 }
