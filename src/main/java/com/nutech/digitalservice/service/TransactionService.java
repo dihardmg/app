@@ -46,6 +46,13 @@ public class TransactionService {
     @Transactional
     @CacheEvict(value = "services", allEntries = true) // Clear cache when transaction occurs
     public TransactionResponse makeTransaction(User user, String serviceCode) {
+        // Log virtual thread info
+        Thread currentThread = Thread.currentThread();
+        System.out.println("[THREAD-DEBUG] Transaction executing in thread: " +
+                "name=" + currentThread.getName() +
+                ", isVirtual=" + currentThread.isVirtual() +
+                ", id=" + currentThread.threadId());
+
         // Check if service exists using raw query
         Optional<String> serviceNameOpt = transactionRepositoryCustom.getServiceNameByCode(serviceCode);
         if (serviceNameOpt.isEmpty()) {

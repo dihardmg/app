@@ -45,6 +45,13 @@ public class BalanceService {
 
     @Transactional
     public Balance topUp(User user, BigDecimal amount) {
+        // Log virtual thread info
+        Thread currentThread = Thread.currentThread();
+        System.out.println("[THREAD-DEBUG] TopUp executing in thread: " +
+                "name=" + currentThread.getName() +
+                ", isVirtual=" + currentThread.isVirtual() +
+                ", id=" + currentThread.threadId());
+
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Parameter amount hanya boleh angka dan tidak boleh lebih kecil dari 0");
         }
