@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
@@ -104,7 +103,7 @@ public class ProfileService {
     }
 
     @Transactional
-    @CachePut(value = "profiles", key = "#user.id")
+    @CacheEvict(value = "profiles", key = "#user.id")
     public ProfileResponse updateProfile(User user, UpdateProfileRequest request) {
         log.info("Updating profile for user ID: {}", user.getId());
 
@@ -123,13 +122,14 @@ public class ProfileService {
                 .profileImage(fullProfileImageUrl)
                 .build();
 
-        log.info("Profile updated and cached for user ID: {}", user.getId());
+        log.info("Profile updated, cache evicted for user ID: {}. Next read will fetch from database and re-cache.", user.getId());
         return profileResponse;
     }
 
     @Transactional
-    @CachePut(value = "profiles", key = "#user.id")
+    @CacheEvict(value = "profiles", key = "#user.id")
     public ProfileResponse updateProfileImage(User user, ImageUploadRequest request) {
+        log.info("Updating profile image for user ID: {}", user.getId());
         MultipartFile file = request.getFile();
 
         // Validasi file
@@ -158,6 +158,8 @@ public class ProfileService {
 
             // Build full URL for response
             String fullImageUrl = buildFullImageUrl(imageUrl);
+
+            log.info("Profile image updated, cache evicted for user ID: {}. Next read will fetch from database and re-cache.", user.getId());
 
             // Return profile response with updated data
             return ProfileResponse.builder()
@@ -285,17 +287,6 @@ public class ProfileService {
     public void evictProfileCache(Long userId) {
         log.info("Manually evicting profile cache for user ID: {}", userId);
         cacheManager.getCache("profiles").evict(userId);
-    }
-
-    /**
-     * Method untuk refresh profile cache
-     * @param user User untuk refresh cache
-     * @return ProfileResponse yang baru
-     */
-    @CacheEvict(value = "profiles", key = "#user.id")
-    public ProfileResponse refreshProfileCache(User user) {
-        log.info("Refreshing profile cache for user ID: {}", user.getId());
-        return getProfile(user);
     }
 
     /**
