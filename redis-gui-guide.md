@@ -174,6 +174,238 @@ spring.cache.redis.key-prefix=app:cache:
 
 ---
 
+## 🔄 **Cache Invalidation Pattern**
+
+### **Overview**
+Project ini menggunakan **Cache Invalidation Pattern** (bukan Cache-Update Pattern) untuk mengupdate cache. Ini adalah best practice untuk memastikan konsistensi data antara database dan cache.
+
+### **Pattern Comparison**
+
+#### **❌ Old Pattern: @CachePut (Update Directly)**
+```java
+@CachePut(value = "profiles", key = "#user.id")
+public ProfileResponse updateProfile(User user, UpdateProfileRequest request) {
+    // Update ke database
+    // Update juga cache dengan return value
+}
+```
+
+**Kelebihan:**
+- ✅ Data langsung available di cache
+- ✅ Read berikutnya fast (cache hit)
+
+**Kekurangan:**
+- ❌ Risiko inkonsistensi jika update gagal di salah satu tempat
+- ❌ Perlu handle transaction/rollback di dua tempat
+- ❌ Lebih kompleks secara code logic
+
+#### **✅ Current Pattern: @CacheEvict (Cache Invalidation)** - **RECOMMENDED**
+```java
+@CacheEvict(value = "profiles", key = "#user.id")
+public ProfileResponse updateProfile(User user, UpdateProfileRequest request) {
+    // Update ke database
+    // Delete cache dari Redis
+    // Next read akan fetch dari DB dan re-cache
+}
+```
+
+**Kelebihan:**
+- ✅ Lebih sederhana dan less error-prone
+- ✅ Data selalu fresh dari database
+- ✅ Tidak perlu sync logic antara DB dan Redis
+- ✅ Best practice untuk kebanyakan use case
+
+**Kekurangan:**
+- ❌ Read pertama setelah update akan sedikit slower (cache miss)
+- ❌ Tambahan DB load untuk read pertama
+
+### **Cache Invalidation Flow**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    UPDATE PROFILE FLOW                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. Client Request                                              │
+│     PUT /api/v1/profile                                        │
+│     {                                                          │
+│       "firstName": "Updated Name",                             │
+│       "lastName": "Updated Last"                               │
+│     }                                                          │
+│            ↓                                                   │
+│  2. Controller → ProfileService.updateProfile()                │
+│            ↓                                                   │
+│  3. Update ke Database                                         │
+│     UPDATE users SET first_name = 'Updated Name'...            │
+│            ↓                                                   │
+│  4. @CacheEvict Triggered                                      │
+│     DEL app:cache:profiles::1  (cache dihapus)                │
+│            ↓                                                   │
+│  5. Return response ke client (data dari DB)                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    NEXT READ FLOW                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. Client Request                                              │
+│     GET /api/v1/profile                                        │
+│            ↓                                                   │
+│  2. Controller → ProfileService.getProfile()                   │
+│            ↓                                                   │
+│  3. @Cacheable Check Redis                                     │
+│     Result: CACHE MISS (key sudah dihapus)                     │
+│            ↓                                                   │
+│  4. Fetch from Database                                        │
+│     SELECT * FROM users WHERE id = 1                           │
+│            ↓                                                   │
+│  5. Cache to Redis (@Cacheable)                                │
+│     SET app:cache:profiles::1 "{...}"                         │
+│            ↓                                                   │
+│  6. Return response ke client                                  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### **Implementation Details**
+
+#### **ProfileService.java**
+```java
+// Line 105-127
+@Transactional
+@CacheEvict(value = "profiles", key = "#user.id")
+public ProfileResponse updateProfile(User user, UpdateProfileRequest request) {
+    log.info("Updating profile for user ID: {}", user.getId());
+
+    // Update ke database
+    User updatedUser = userRepositoryCustom.updateUserProfileWithRawQuery(
+            user.getId(),
+            request.getFirstName(),
+            request.getLastName()
+    );
+
+    // Build response
+    ProfileResponse profileResponse = ProfileResponse.builder()
+            .email(updatedUser.getEmail())
+            .firstName(updatedUser.getFirstName())
+            .lastName(updatedUser.getLastName())
+            .profileImage(buildFullImageUrl(updatedUser.getProfileImage()))
+            .build();
+
+    // @CacheEvict akan otomatis menghapus cache setelah method selesai
+    log.info("Profile updated, cache evicted for user ID: {}. Next read will fetch from database and re-cache.", user.getId());
+
+    return profileResponse;
+}
+
+// Line 129-173
+@Transactional
+@CacheEvict(value = "profiles", key = "#user.id")
+public ProfileResponse updateProfileImage(User user, ImageUploadRequest request) {
+    // Update profile image
+    // @CacheEvict akan otomatis menghapus cache
+}
+```
+
+### **When to Use Which Pattern?**
+
+#### **Use @CacheEvict (Cache Invalidation) when:**
+- ✅ Data consistency lebih penting daripada performance marginal
+- ✅ Updates tidak sangat frequent
+- ✅ Read pattern tidak predictable
+- ✅ Multiple app instances yang mengupdate data yang sama
+- ✅ **Default choice untuk kebanyakan use case**
+
+#### **Use @CachePut (Cache Update) when:**
+- High-traffic data yang read-heavy
+- Butuh low-latency guarantee untuk setiap read
+- Complex compute logic untuk generate cache value
+- Write-through cache pattern
+
+### **Testing Cache Invalidation with Redis Commander**
+
+#### **1. Monitor Cache Invalidation**
+```bash
+# Redis Commander CLI Tab:
+MONITOR
+
+# Then update profile via API:
+curl -X PUT http://localhost:8081/api/v1/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"firstName": "Updated", "lastName": "Name"}'
+
+# You will see in MONITOR:
+DEL "app:cache:profiles::1"
+```
+
+#### **2. Verify Cache is Evicted**
+```bash
+# After update, check cache:
+GET app:cache:profiles::1
+
+# Result: (nil) → Cache berhasil dihapus
+```
+
+#### **3. Verify Cache Re-creation on Next Read**
+```bash
+# Call get profile API:
+curl -X GET http://localhost:8081/api/v1/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Check cache again:
+GET app:cache:profiles::1
+
+# Result: "{...}" → Cache berhasil dibuat ulang dengan data baru
+```
+
+#### **4. Full Cache Invalidation Test Flow**
+```bash
+# Step 1: Get profile (cache miss → create)
+curl -X GET http://localhost:8081/api/v1/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Step 2: Verify cache exists
+# Redis Commander: GET app:cache:profiles::1
+# Result: {"firstName":"Old Name",...}
+
+# Step 3: Update profile
+curl -X PUT http://localhost:8081/api/v1/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"firstName": "New Name", "lastName": "New Last"}'
+
+# Step 4: Verify cache is DELETED
+# Redis Commander: GET app:cache:profiles::1
+# Result: (nil)
+
+# Step 5: Get profile again (cache miss → fetch from DB → re-cache)
+curl -X GET http://localhost:8081/api/v1/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Step 6: Verify cache is RECREATED with new data
+# Redis Commander: GET app:cache:profiles::1
+# Result: {"firstName":"New Name",...}
+```
+
+### **Best Practices for Cache Invalidation**
+
+✅ **DO:**
+- Gunakan `@CacheEvict` untuk update/delete operations
+- Log cache eviction untuk debugging
+- Test cache invalidation flow dengan Redis Commander
+- Use specific key untuk evict (bukan allEntries=true)
+- Combine dengan `@Transactional` untuk data consistency
+
+❌ **DON'T:**
+- Jangan gunakan `@CachePut` kecuali ada requirement spesifik
+- Jangan lupa test cache miss scenario setelah update
+- Jangan evict all entries jika hanya satu yang berubah
+- Jangan rely pada cache tanpa TTL
+
+---
+
 ## 🔧 **Testing Redis GUI with Application Cache**
 
 ### **1. Clear Cache & Test Flow**
@@ -410,8 +642,17 @@ SCAN 0 MATCH app:cache:* COUNT 50
 - ✅ Set appropriate TTL values
 - ✅ Regular cleanup of test cache
 - ✅ Monitor cache invalidation
+- ✅ **Use @CacheEvict for update/delete operations** (Cache Invalidation Pattern)
+- ✅ **Avoid @CachePut unless necessary** (prone to inconsistency)
 
-### **3. Performance Optimization**
+### **3. Cache Invalidation Strategy** (Current Implementation)
+- ✅ **@CacheEvict** for update/delete operations → Delete cache, not update
+- ✅ **@Cacheable** for read operations → Auto-fetch from DB on cache miss
+- ✅ **@Transactional** → Ensure data consistency between DB and cache
+- ✅ **Next read pattern**: Cache miss → DB fetch → Auto re-cache
+- ✅ **Test with Redis Commander**: Use MONITOR to watch DEL operations
+
+### **4. Performance Optimization**
 - ✅ Profile slow Redis operations
 - ✅ Optimize memory usage patterns
 - ✅ Use appropriate data structures
