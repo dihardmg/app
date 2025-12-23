@@ -47,19 +47,19 @@ public class ThreadMonitorController {
         threadInfo.put("currentThread", currentThreadInfo);
 
         // Count all live threads by type
-        int platformThreadCount = 0;
-        int virtualThreadCount = 0;
+        final int[] platformThreadCount = {0};
+        final int[] virtualThreadCount = {0};
 
         Thread.getAllStackTraces().keySet().forEach(thread -> {
             if (thread.isVirtual()) {
-                virtualThreadCount++;
+                virtualThreadCount[0]++;
             } else {
-                platformThreadCount++;
+                platformThreadCount[0]++;
             }
         });
 
-        threadInfo.put("platformThreadCount", platformThreadCount);
-        threadInfo.put("virtualThreadCount", virtualThreadCount);
+        threadInfo.put("platformThreadCount", platformThreadCount[0]);
+        threadInfo.put("virtualThreadCount", virtualThreadCount[0]);
 
         // JVM Info
         Runtime runtime = Runtime.getRuntime();
