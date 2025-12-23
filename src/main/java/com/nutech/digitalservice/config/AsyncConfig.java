@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -41,6 +43,10 @@ public class AsyncConfig {
 
         // Create executor that creates a new virtual thread for each task
         // Virtual threads are extremely lightweight (KB in memory vs MB for platform threads)
-        return Executors.newVirtualThreadPerTaskExecutor();
+        // Wrap with DelegatingSecurityContextExecutorService to propagate SecurityContext
+        // This ensures that Spring Security context is available in async threads
+        return new DelegatingSecurityContextExecutorService(
+                Executors.newVirtualThreadPerTaskExecutor()
+        );
     }
 }

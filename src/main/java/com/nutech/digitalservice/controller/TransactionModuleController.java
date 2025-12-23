@@ -20,15 +20,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -41,10 +37,6 @@ public class TransactionModuleController {
 
     @Autowired
     private TransactionService transactionService;
-
-    @Autowired
-    @Qualifier("virtualThreadExecutor")
-    private Executor virtualThreadExecutor;
 
     @Operation(summary = "Get Balance", description = "Digunakan untuk mendapatkan informasi balance / saldo terakhir dari User")
     @ApiResponses(value = {
@@ -176,25 +168,23 @@ public class TransactionModuleController {
             )
     })
     @PostMapping("/topup")
-    public CompletableFuture<ResponseEntity<WebResponse<BalanceResponse>>> topUp(
+    public ResponseEntity<WebResponse<BalanceResponse>> topUp(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody TopUpRequest request) {
 
-        // Execute top-up operation in virtual thread for high concurrency
-        return CompletableFuture.supplyAsync(() -> {
-            Balance balance = balanceService.topUp(user, request.getTop_up_amount());
+        // Execute top-up operation (automatically runs in virtual thread)
+        Balance balance = balanceService.topUp(user, request.getTop_up_amount());
 
-            // Display the top-up amount, not the total balance
-            BalanceResponse balanceResponse = BalanceResponse.fromBigDecimal(request.getTop_up_amount());
+        // Display the top-up amount, not the total balance
+        BalanceResponse balanceResponse = BalanceResponse.fromBigDecimal(request.getTop_up_amount());
 
-            WebResponse<BalanceResponse> response = WebResponse.<BalanceResponse>builder()
-                    .status(0)
-                    .message("Top Up Balance berhasil")
-                    .data(balanceResponse)
-                    .build();
+        WebResponse<BalanceResponse> response = WebResponse.<BalanceResponse>builder()
+                .status(0)
+                .message("Top Up Balance berhasil")
+                .data(balanceResponse)
+                .build();
 
-            return ResponseEntity.ok(response);
-        }, virtualThreadExecutor);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Transaction", description = "Digunakan untuk melakukan transaksi dari services / layanan yang tersedia")
@@ -295,22 +285,20 @@ public class TransactionModuleController {
             )
     })
     @PostMapping("/transaction")
-    public CompletableFuture<ResponseEntity<WebResponse<TransactionResponse>>> makeTransaction(
+    public ResponseEntity<WebResponse<TransactionResponse>> makeTransaction(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody TransactionRequest request) {
 
-        // Execute transaction operation in virtual thread for high concurrency
-        return CompletableFuture.supplyAsync(() -> {
-            TransactionResponse transactionResponse = transactionService.makeTransaction(user, request.getServiceCode());
+        // Execute transaction operation (automatically runs in virtual thread)
+        TransactionResponse transactionResponse = transactionService.makeTransaction(user, request.getServiceCode());
 
-            WebResponse<TransactionResponse> response = WebResponse.<TransactionResponse>builder()
-                    .status(0)
-                    .message("Transaksi berhasil")
-                    .data(transactionResponse)
-                    .build();
+        WebResponse<TransactionResponse> response = WebResponse.<TransactionResponse>builder()
+                .status(0)
+                .message("Transaksi berhasil")
+                .data(transactionResponse)
+                .build();
 
-            return ResponseEntity.ok(response);
-        }, virtualThreadExecutor);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Transaction History", description = "Digunakan untuk mendapatkan informasi history transaksi")
